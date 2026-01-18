@@ -20,19 +20,19 @@ namespace ZXing {
  * @brief Configuration options for barcode creation.
  *
  * This class encapsulates all the parameters needed to create a barcode with
- * specific format and settings.
+ * specific symbology and settings.
  *
  * @details
  * The options property is a string that can contain multiple key-value pairs
  * separated by commas. Each key-value pair configures a specific aspect of the
- * barcode generation process and are dependent on the used BarcodeFormat.
+ * barcode generation process and are dependent on the used Symbology.
  * Boolean properties are interpreted as true if only the property name is present.
  * Keys are case-insensitive. Passing a serialized JSON object is also supported.
  *
  * For a list of all supported options, see the list of read-only properties below.
  *
  * @example
- * auto opts = CreatorOptions(BarcodeFormat::QRCode, "ecLevel=30%, gs1");
+ * auto opts = CreatorOptions(Symbology::QRCode, "ecLevel=30%, gs1");
  */
 class CreatorOptions
 {
@@ -43,7 +43,7 @@ class CreatorOptions
 	friend Barcode CreateBarcode(const void* data, int size, int mode, const CreatorOptions& options);
 
 public:
-	CreatorOptions(BarcodeFormat format, std::string options = {});
+	CreatorOptions(Symbology symbology, std::string options = {});
 	~CreatorOptions();
 	CreatorOptions(CreatorOptions&&);
 	CreatorOptions& operator=(CreatorOptions&&);
@@ -55,7 +55,7 @@ public:
 	CreatorOptions& NAME(TYPE v)&; \
 	CreatorOptions&& NAME(TYPE v)&&;
 
-	ZX_PROPERTY(BarcodeFormat, format)
+	ZX_PROPERTY(Symbology, symbology)
 	ZX_PROPERTY(std::string, options)
 
 #undef ZX_PROPERTY
@@ -81,7 +81,7 @@ public:
  * Generate barcode from unicode text
  *
  * @param contents  UTF-8 string to encode into a barcode
- * @param options  CreatorOptions (including BarcodeFormat)
+ * @param options  CreatorOptions (including Symbology)
  * @return #Barcode  generated barcode
  */
 Barcode CreateBarcodeFromText(std::string_view contents, const CreatorOptions& options);
@@ -91,7 +91,7 @@ Barcode CreateBarcodeFromText(std::string_view contents, const CreatorOptions& o
  *
  * @param data  array of bytes to encode into a barcode
  * @param size  size of byte array
- * @param options  CreatorOptions (including BarcodeFormat)
+ * @param options  CreatorOptions (including Symbology)
  * @return #Barcode  generated barcode
  */
 Barcode CreateBarcodeFromBytes(const void* data, int size, const CreatorOptions& options);

@@ -12,11 +12,11 @@
 
 namespace ZXingQt {
 
-QImage WriteBarcode(QStringView text, ZXing::BarcodeFormat format)
+QImage WriteBarcode(QStringView text, ZXing::Symbology symbology)
 {
 	using namespace ZXing;
 
-	auto barcode = CreateBarcodeFromText(text.toString().toStdString(), format);
+	auto barcode = CreateBarcodeFromText(text.toString().toStdString(), symbology);
 	auto bitmap = WriteBarcodeToImage(barcode);
 
 	return QImage(bitmap.data(), bitmap.width(), bitmap.height(), bitmap.width(), QImage::Format::Format_Grayscale8).copy();
@@ -31,11 +31,11 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	auto format = ZXing::BarcodeFormatFromString(argv[1]);
+	auto symbology = ZXing::Symbology(argv[1]);
 	auto text = QString(argv[2]);
 	auto filename = QString(argv[3]);
 
-	auto result = ZXingQt::WriteBarcode(text, format);
+	auto result = ZXingQt::WriteBarcode(text, symbology);
 
 	result.save(filename);
 

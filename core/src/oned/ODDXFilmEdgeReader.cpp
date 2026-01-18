@@ -227,7 +227,7 @@ BarcodeData DXFilmEdgeReader::decodePattern(int rowNumber, PatternView& next, st
 	// ISO/IEC 15424:2008(E) specifies 'X' as 'other barcode' that can be used by the decoder manufacturer as he sees fit.
 	SymbologyIdentifier si {'X', 'F'};
 
-	return LinearBarcode(BarcodeFormat::DXFilmEdge, txt, rowNumber, xStart, xStop, si);
+	return LinearBarcode(Symbology::DXFilmEdge, txt, rowNumber, xStart, xStop, si);
 }
 
 } // namespace ZXing::OneD

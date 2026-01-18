@@ -19,9 +19,9 @@ typedef ZXing::Barcodes ZXing_Barcodes;
 typedef ZXing::ImageView ZXing_ImageView;
 typedef ZXing::Image ZXing_Image;
 typedef ZXing::ReaderOptions ZXing_ReaderOptions;
-
 typedef ZXing::CreatorOptions ZXing_CreatorOptions;
 typedef ZXing::WriterOptions ZXing_WriterOptions;
+typedef ZXing::Symbologies ZXing_Symbologies;
 
 extern "C"
 {
@@ -34,6 +34,9 @@ typedef struct ZXing_Image ZXing_Image;
 typedef struct ZXing_ReaderOptions ZXing_ReaderOptions;
 typedef struct ZXing_CreatorOptions ZXing_CreatorOptions;
 typedef struct ZXing_WriterOptions ZXing_WriterOptions;
+typedef struct ZXing_Symbologies ZXing_Symbologies;
+
+#include "Symbology.h"
 
 #endif
 
@@ -115,6 +118,23 @@ typedef ZXing_BarcodeFormat ZXing_BarcodeFormats;
 ZXing_BarcodeFormats ZXing_BarcodeFormatsFromString(const char* str);
 ZXing_BarcodeFormat ZXing_BarcodeFormatFromString(const char* str);
 char* ZXing_BarcodeFormatToString(ZXing_BarcodeFormat format);
+
+/*
+ * ZXing/Symbology.h
+ */
+
+typedef enum
+{
+	asdf=(((uint8_t)("234"[0]) << 0) | ((uint8_t)("234"[1]) << 8) | ((uint8_t)("234"[2]) << 16)),
+	ZXing_Symbology_Test = ZX_SYMBOLOGY_ID("zxc"),
+// #define DECLARE_SYM(NAME, ID, FLAGS, ZINT, ENABLED, HRI) ZXing_Symbology_##NAME = ZX_SYMBOLOGY_ID(ID),
+// 	ZX_SYMBOLOGY_LIST(DECLARE_SYM)
+// #undef DECLARE_SYM
+		ZXing_Symbology_Invalid = ZX_SYMBOLOGY_ID("INV") /* return value when BarcodeFormatsFromString() throws */
+} ZXing_Symbology;
+
+ZXing_Symbology ZXing_SymbologyFromString(const char* str);
+char* ZXing_Symbology_Name(ZXing_Symbology symbology);
 
 /*
  * ZXing/ZXingCpp.h
@@ -272,11 +292,11 @@ ZXing_Barcodes* ZXing_ReadBarcodes(const ZXing_ImageView* iv, const ZXing_Reader
  * ZXing/WriteBarcode.h
  */
 
-ZXing_CreatorOptions* ZXing_CreatorOptions_new(ZXing_BarcodeFormat format);
+ZXing_CreatorOptions* ZXing_CreatorOptions_new(ZXing_Symbology symbology);
 void ZXing_CreatorOptions_delete(ZXing_CreatorOptions* opts);
 
-void ZXing_CreatorOptions_setFormat(ZXing_CreatorOptions* opts, ZXing_BarcodeFormat format);
-ZXing_BarcodeFormat ZXing_CreatorOptions_getFormat(const ZXing_CreatorOptions* opts);
+void ZXing_CreatorOptions_setSymbology(ZXing_CreatorOptions* opts, ZXing_Symbology symbology);
+ZXing_Symbology ZXing_CreatorOptions_getSymbology(const ZXing_CreatorOptions* opts);
 
 void ZXing_CreatorOptions_setOptions(ZXing_CreatorOptions* opts, const char* options);
 char* ZXing_CreatorOptions_getOptions(const ZXing_CreatorOptions* opts);

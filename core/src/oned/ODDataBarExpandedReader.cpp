@@ -7,12 +7,12 @@
 
 #include "ODDataBarExpandedReader.h"
 
-#include "BarcodeFormat.h"
 #include "DecoderResult.h"
 #include "DetectorResult.h"
 #include "ODDataBarCommon.h"
 #include "ODDataBarExpandedBitDecoder.h"
 #include "BarcodeData.h"
+#include "Symbology.h"
 
 #include <cmath>
 #include <map>
@@ -373,7 +373,7 @@ BarcodeData DataBarExpandedReader::decodePattern(int rowNumber, PatternView& vie
 	return {.content = Content(ByteArray(txt), {'e', '0', 0, AIFlag::GS1}),
 			.error = Error{},
 			.position = EstimatePosition(pairs.front(), pairs.back()),
-			.format = BarcodeFormat::DataBarExpanded,
+			.symbology = Symbology::DataBarExp,
 			.lineCount = EstimateLineCount(pairs.front(), pairs.back())};
 }
 

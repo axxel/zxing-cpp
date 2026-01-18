@@ -23,22 +23,22 @@ BarcodeFormats SupportedBarcodeFormats(Operation op)
 	case Operation::Read:
 		return BarcodeFormat::None
 #ifdef ZXING_READERS
-#ifdef ZXING_ENABLE_1D
+#if ZXING_ENABLE_1D
 			   | BarcodeFormat::LinearCodes
 #endif
-#ifdef ZXING_ENABLE_AZTEC
+#if ZXING_ENABLE_AZTEC
 			   | BarcodeFormat::Aztec
 #endif
-#ifdef ZXING_ENABLE_DATAMATRIX
+#if ZXING_ENABLE_DATAMATRIX
 			   | BarcodeFormat::DataMatrix
 #endif
-#ifdef ZXING_ENABLE_MAXICODE
+#if ZXING_ENABLE_MAXICODE
 			   | BarcodeFormat::MaxiCode
 #endif
-#ifdef ZXING_ENABLE_PDF417
+#if ZXING_ENABLE_PDF417
 			   | BarcodeFormat::PDF417
 #endif
-#ifdef ZXING_ENABLE_QRCODE
+#if ZXING_ENABLE_QRCODE
 			   | BarcodeFormat::QRCode | BarcodeFormat::MicroQRCode | BarcodeFormat::RMQRCode
 #endif
 #endif // ZXING_READERS
@@ -49,22 +49,22 @@ BarcodeFormats SupportedBarcodeFormats(Operation op)
 #else
 		return BarcodeFormat::None
 #ifdef ZXING_WRITERS
-#ifdef ZXING_ENABLE_1D
+#if ZXING_ENABLE_1D
 			   | BarcodeFormat::LinearCodes
 #endif
-#ifdef ZXING_ENABLE_AZTEC
+#if ZXING_ENABLE_AZTEC
 			   | BarcodeFormat::Aztec
 #endif
-#ifdef ZXING_ENABLE_DATAMATRIX
+#if ZXING_ENABLE_DATAMATRIX
 			   | BarcodeFormat::DataMatrix
 #endif
-#ifdef ZXING_ENABLE_MAXICODE
+#if ZXING_ENABLE_MAXICODE
 			   | BarcodeFormat::MaxiCode
 #endif
-#ifdef ZXING_ENABLE_PDF417
+#if ZXING_ENABLE_PDF417
 			   | BarcodeFormat::PDF417
 #endif
-#ifdef ZXING_ENABLE_QRCODE
+#if ZXING_ENABLE_QRCODE
 			   | BarcodeFormat::QRCode
 #endif
 #endif

@@ -88,7 +88,7 @@ BarcodeData CodabarReader::decodePattern(int rowNumber, PatternView& next, std::
 	SymbologyIdentifier symbologyIdentifier = {'F', '0'};
 
 	int xStop = next.pixelsTillEnd();
-	return LinearBarcode(BarcodeFormat::Codabar, txt, rowNumber, xStart, xStop, symbologyIdentifier);
+	return LinearBarcode(Symbology::Codabar, txt, rowNumber, xStart, xStop, symbologyIdentifier);
 }
 
 } // namespace ZXing::OneD

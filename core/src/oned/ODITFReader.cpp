@@ -91,7 +91,7 @@ BarcodeData ITFReader::decodePattern(int rowNumber, PatternView& next, std::uniq
 	
 	int xStop = next.pixelsTillEnd();
 
-	return LinearBarcode(BarcodeFormat::ITF, txt, rowNumber, xStart, xStop, symbologyIdentifier, error);
+	return LinearBarcode(Symbology::ITF, txt, rowNumber, xStart, xStop, symbologyIdentifier, error);
 }
 
 } // namespace ZXing::OneD

@@ -59,7 +59,7 @@ BarcodesData Reader::read(const BinaryBitmap& image, [[maybe_unused]] int maxSym
 	if (!decRes.isValid())
 		return {};
 
-	return ToVector(MatrixBarcode(std::move(decRes), std::move(detRes), BarcodeFormat::MaxiCode));
+	return ToVector(MatrixBarcode(std::move(decRes), std::move(detRes), Symbology::MaxiCode));
 }
 
 } // namespace ZXing::MaxiCode

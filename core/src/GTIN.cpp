@@ -155,7 +155,7 @@ static const CountryId COUNTRIES[] = {
 	// clang-format on
 };
 
-std::string LookupCountryIdentifier(std::string_view GTIN, const BarcodeFormat format)
+std::string LookupCountryIdentifier(std::string_view GTIN, const Symbology symbology)
 {
 	// Ignore add-on if any
 	const auto space = GTIN.find(' ');
@@ -167,9 +167,9 @@ std::string LookupCountryIdentifier(std::string_view GTIN, const BarcodeFormat f
 	// GTIN-14 leading packaging level indicator
 	const int first = size == 14 ? 1 : 0;
 	// UPC-A/E implicit leading 0
-	const int implicitZero = size == 12 || (size == 8 && format != BarcodeFormat::EAN8) ? 1 : 0;
+	const int implicitZero = size == 12 || (size == 8 && symbology != Symbology::EAN8) ? 1 : 0;
 
-	if (size != 8 || format != BarcodeFormat::EAN8) { // Assuming following doesn't apply to EAN-8
+	if (size != 8 || symbology != Symbology::EAN8) { // Assuming following doesn't apply to EAN-8
 		// 0000000 Restricted Circulation Numbers; 0000001-0000099 unused to avoid collision with GTIN-8
 		int prefix = FromString<int>(GTIN.substr(first, 7 - implicitZero));
 		if (prefix >= 0 && prefix <= 99)
@@ -189,7 +189,7 @@ std::string LookupCountryIdentifier(std::string_view GTIN, const BarcodeFormat f
 	const int prefix = FromString<int>(GTIN.substr(first, 3 - implicitZero));
 
 	// Special case EAN-8 for prefix < 100 (GS1 General Specifications Figure 1.4.3-1)
-	if (size == 8 && format == BarcodeFormat::EAN8 && prefix <= 99) // Restricted Circulation Numbers
+	if (size == 8 && symbology == Symbology::EAN8 && prefix <= 99) // Restricted Circulation Numbers
 		return {};
 
 	const auto it = std::lower_bound(std::begin(COUNTRIES), std::end(COUNTRIES), CountryId{0, narrow_cast<uint16_t>(prefix), ""});
@@ -201,7 +201,7 @@ std::string EanAddOn(const Barcode& barcode)
 {
 	if (barcode.symbologyIdentifier() != "]E3")
 		return {};
-	return barcode.text().substr(barcode.format() == BarcodeFormat::EAN8 ? 8 : 13);
+	return barcode.text().substr(barcode.symbology() == Symbology::EAN8 ? 8 : 13);
 }
 
 std::string IssueNr(const std::string& ean2AddOn)

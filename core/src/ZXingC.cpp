@@ -329,9 +329,9 @@ ZXing_Barcodes* ZXing_ReadBarcodes(const ZXing_ImageView* iv, const ZXing_Reader
  * ZXing/WriteBarcode.h
  */
 
-ZXing_CreatorOptions* ZXing_CreatorOptions_new(ZXing_BarcodeFormat format)
+ZXing_CreatorOptions* ZXing_CreatorOptions_new(ZXing_Symbology symbology)
 {
-	ZX_TRY(new CreatorOptions(static_cast<BarcodeFormat>(format)));
+	ZX_TRY(new CreatorOptions(static_cast<SymbologyID>(symbology)));
 }
 
 void ZXing_CreatorOptions_delete(ZXing_CreatorOptions* opts)
@@ -343,7 +343,7 @@ void ZXing_CreatorOptions_delete(ZXing_CreatorOptions* opts)
 	ZXing_##TYPE ZXing_CreatorOptions_get##CAP_NAME(const ZXing_CreatorOptions* opts) { return static_cast<ZXing_##TYPE>(opts->NAME()); } \
 	void ZXing_CreatorOptions_set##CAP_NAME(ZXing_CreatorOptions* opts, ZXing_##TYPE val) { opts->NAME(static_cast<TYPE>(val)); }
 
-ZX_ENUM_PROPERTY(BarcodeFormat, format, Format)
+// ZX_ENUM_PROPERTY(Symbology, symbology, Symbology)
 
 #undef ZX_ENUM_PROPERTY
 
@@ -352,6 +352,9 @@ ZX_ENUM_PROPERTY(BarcodeFormat, format, Format)
 	void ZXing_CreatorOptions_set##CAP_NAME(ZXing_CreatorOptions* opts, TYPE val) { opts->NAME(val); }
 
 #undef ZX_PROPERTY
+
+ZXing_Symbology ZXing_CreatorOptions_getSymbology(const ZXing_CreatorOptions* opts) { return static_cast<ZXing_Symbology>(opts->symbology().id()); } \
+void ZXing_CreatorOptions_setSymbology(ZXing_CreatorOptions* opts, ZXing_Symbology val) { opts->symbology(static_cast<SymbologyID>(val)); }
 
 char* ZXing_CreatorOptions_getOptions(const ZXing_CreatorOptions* opts)
 {

@@ -13,6 +13,7 @@
 #include "ImageView.h"
 #include "Quadrilateral.h"
 #include "ReaderOptions.h" // for TextMode
+#include "Symbology.h"
 #include "Version.h" // ZXING_... macros
 
 #include <memory>
@@ -69,7 +70,13 @@ public:
 
 	const Error& error() const;
 
-	BarcodeFormat format() const;
+	/**
+	 * @brief symbology returns the symbology of the barcode (used to be called the BarcodeFormat)
+	 */
+	Symbology symbology() const;
+
+	// [[deprecated]]
+	inline BarcodeFormat format() const { return BarcodeFormatFromSymbology(symbology()); }
 
 	/**
 	 * @brief bytes is the raw / standard content without any modifications like character set conversions

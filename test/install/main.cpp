@@ -6,13 +6,13 @@ int main(int argc, char** argv)
 {
 	using namespace ZXing;
 
-	auto copts = CreatorOptions(BarcodeFormat::QRCode, "eclevel=L");
+	auto copts = CreatorOptions(Symbology::QRCode, "eclevel=L");
 	auto barcode = CreateBarcodeFromText("Test", copts);
 	auto wopts = WriterOptions().scale(2);
 	auto img = WriteBarcodeToImage(barcode, wopts);
 
 	auto iv = ImageView(img.data(), img.width(), img.height(), img.format());
-	auto ropts = ReaderOptions().formats(BarcodeFormat::MatrixCodes);
+	auto ropts = ReaderOptions().symbologies(Symbologies::all(Symbology::Matrix));
 	auto barcodes = ReadBarcodes(iv, ropts);
 
 	for (const auto& b : barcodes)

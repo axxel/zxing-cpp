@@ -32,12 +32,13 @@
 #include <charconv>
 #include <optional>
 
+using namespace std::literals;
 
 namespace ZXing {
 
 struct CreatorOptions::Data
 {
-	BarcodeFormat format;
+	Symbology symbology;
 	std::string options;
 
 	// symbol size (qrcode, datamatrix, etc), map from I, 'WxH'
@@ -46,12 +47,13 @@ struct CreatorOptions::Data
 	mutable unique_zint_symbol zint;
 };
 
+// TODO: check return type
 #define ZX_PROPERTY(TYPE, NAME) \
 	const TYPE& CreatorOptions::NAME() const noexcept { return d->NAME; } \
 	CreatorOptions& CreatorOptions::NAME(TYPE v)& { return d->NAME = std::move(v), *this; } \
 	CreatorOptions&& CreatorOptions::NAME(TYPE v)&& { return d->NAME = std::move(v), std::move(*this); }
 
-ZX_PROPERTY(BarcodeFormat, format)
+ZX_PROPERTY(Symbology, symbology)
 ZX_PROPERTY(std::string, options)
 
 #undef ZX_PROPERTY
@@ -72,7 +74,7 @@ ZX_RO_PROPERTY(int, dataMask);
 
 #undef ZX_RO_PROPERTY
 
-CreatorOptions::CreatorOptions(BarcodeFormat format, std::string options) : d(std::make_unique<Data>(format, std::move(options))) {}
+CreatorOptions::CreatorOptions(Symbology symbology, std::string options) : d(std::make_unique<Data>(symbology, std::move(options))) {}
 CreatorOptions::~CreatorOptions() = default;
 CreatorOptions::CreatorOptions(CreatorOptions&&) = default;
 CreatorOptions& CreatorOptions::operator=(CreatorOptions&&) = default;
@@ -82,44 +84,8 @@ inline bool IsAscii(ByteView bv)
 	return std::all_of(bv.begin(), bv.end(), [](uint8_t c) { return c <= 127; });
 }
 
-inline bool SupportsGS1(BarcodeFormat format)
-{
-	return (BarcodeFormat::Aztec | BarcodeFormat::Code128 | BarcodeFormat::DataMatrix | BarcodeFormat::QRCode
-			| BarcodeFormat::RMQRCode | BarcodeFormat::DataBarExpanded)
-		.testFlag(format);
-}
-
 #ifdef ZXING_WRITERS
 #ifdef ZXING_USE_ZINT
-
-struct BarcodeFormatZXing2Zint
-{
-	BarcodeFormat zxing;
-	int zint;
-};
-
-static constexpr BarcodeFormatZXing2Zint barcodeFormatZXing2Zint[] = {
-	{BarcodeFormat::Aztec, BARCODE_AZTEC},
-	{BarcodeFormat::Codabar, BARCODE_CODABAR},
-	{BarcodeFormat::Code39, BARCODE_CODE39},
-	{BarcodeFormat::Code93, BARCODE_CODE93},
-	{BarcodeFormat::Code128, BARCODE_CODE128},
-	{BarcodeFormat::DataBar, BARCODE_DBAR_OMN},
-	{BarcodeFormat::DataBarExpanded, BARCODE_DBAR_EXP},
-	{BarcodeFormat::DataBarLimited, BARCODE_DBAR_LTD},
-	{BarcodeFormat::DataMatrix, BARCODE_DATAMATRIX},
-	{BarcodeFormat::DXFilmEdge, BARCODE_DXFILMEDGE},
-	{BarcodeFormat::EAN8, BARCODE_EAN8},
-	{BarcodeFormat::EAN13, BARCODE_EAN13},
-	{BarcodeFormat::ITF, BARCODE_C25INTER},
-	{BarcodeFormat::MaxiCode, BARCODE_MAXICODE},
-	{BarcodeFormat::MicroQRCode, BARCODE_MICROQR},
-	{BarcodeFormat::PDF417, BARCODE_PDF417},
-	{BarcodeFormat::QRCode, BARCODE_QRCODE},
-	{BarcodeFormat::RMQRCode, BARCODE_RMQR},
-	{BarcodeFormat::UPCA, BARCODE_UPCA},
-	{BarcodeFormat::UPCE, BARCODE_UPCE},
-};
 
 struct String2Int
 {
@@ -167,54 +133,51 @@ static int ParseECLevel(int symbology, std::string_view s)
 	return res;
 };
 
-static constexpr struct { BarcodeFormat format; SymbologyIdentifier si; } barcodeFormat2SymbologyIdentifier[] = {
-	{BarcodeFormat::Aztec, {'z', '0', 3}}, // '1' GS1, '2' AIM
-	{BarcodeFormat::Codabar, {'F', '0'}}, // if checksum processing were implemented and checksum present and stripped then modifier would be 4
-	// {BarcodeFormat::CodablockF, {'O', '4'}}, // '5' GS1
-	{BarcodeFormat::Code128, {'C', '0'}}, // '1' GS1, '2' AIM
-	// {BarcodeFormat::Code16K, {'K', '0'}}, // '1' GS1, '2' AIM, '4' D1 PAD
-	{BarcodeFormat::Code39, {'A', '0'}}, // '3' checksum, '4' extended, '7' checksum,extended
-	{BarcodeFormat::Code93, {'G', '0'}}, // no modifiers
-	{BarcodeFormat::DataBar, {'e', '0', 0, AIFlag::GS1}},
-	{BarcodeFormat::DataBarExpanded, {'e', '0', 0, AIFlag::GS1}},
-	{BarcodeFormat::DataBarLimited, {'e', '0', 0, AIFlag::GS1}},
-	{BarcodeFormat::DataMatrix, {'d', '1', 3}}, // '2' GS1, '3' AIM
-	// {BarcodeFormat::DotCode, {'J', '0', 3}}, // '1' GS1, '2' AIM
-	{BarcodeFormat::DXFilmEdge, {'X', 'F'}},
-	{BarcodeFormat::EAN8, {'E', '4'}},
-	{BarcodeFormat::EAN13, {'E', '0'}},
-	// {BarcodeFormat::HanXin, {'h', '0', 1}}, // '2' GS1
-	{BarcodeFormat::ITF, {'I', '0'}}, // '1' check digit
-	{BarcodeFormat::MaxiCode, {'U', '0', 2}}, // '1' mode 2 or 3
-	// {BarcodeFormat::MicroPDF417, {'L', '2', -1}},
-	{BarcodeFormat::MicroQRCode, {'Q', '1', 1}},
-	{BarcodeFormat::PDF417, {'L', '2', -1}},
-	{BarcodeFormat::QRCode, {'Q', '1', 1}}, // '3' GS1, '5' AIM
-	{BarcodeFormat::RMQRCode, {'Q', '1', 1}}, // '3' GS1, '5' AIM
-	{BarcodeFormat::UPCA, {'E', '0'}},
-	{BarcodeFormat::UPCE, {'E', '0'}},
+static struct { Symbology symbology; SymbologyIdentifier si; } symbology2SymbologyIdentifier[] = {
+	{Symbology::Aztec, {'z', '0', 3}}, // '1' GS1, '2' AIM
+	{Symbology::Codabar, {'F', '0'}}, // if checksum processing were implemented and checksum present and stripped then modifier would be 4
+	// {Symbology::CodablockF, {'O', '4'}}, // '5' GS1
+	{Symbology::Code128, {'C', '0'}}, // '1' GS1, '2' AIM
+	// {Symbology::Code16K, {'K', '0'}}, // '1' GS1, '2' AIM, '4' D1 PAD
+	// {Symbology::Code39, {'A', '0'}}, // '3' checksum, '4' extended, '7' checksum,extended
+	{Symbology::DataBar, {'e', '0', 0, AIFlag::GS1}},
+	{Symbology::DataBarExp, {'e', '0', 0, AIFlag::GS1}},
+	{Symbology::DataBarLtd, {'e', '0', 0, AIFlag::GS1}},
+	{Symbology::DataMatrix, {'d', '1', 3}}, // '2' GS1, '3' AIM
+	// {Symbology::DotCode, {'J', '0', 3}}, // '1' GS1, '2' AIM
+	{Symbology::DXFilmEdge, {'X', 'F'}},
+	{Symbology::EAN8, {'E', '4'}},
+	// {Symbology::HanXin, {'h', '0', 1}}, // '2' GS1
+	// {Symbology::ITF, {'I', '0'}}, // '1' check digit
+	{Symbology::MaxiCode, {'U', '0', 2}}, // '1' mode 2 or 3
+	{Symbology::MicroPDF417, {'L', '2', -1}},
+	{Symbology::MicroQRCode, {'Q', '1', 1}},
+	{Symbology::PDF417, {'L', '2', -1}},
+	{Symbology::QRCode, {'Q', '1', 1}}, // '3' GS1, '5' AIM
+	{Symbology::RMQRCode, {'Q', '1', 1}}, // '3' GS1, '5' AIM
 };
 
 static SymbologyIdentifier SymbologyIdentifierZint2ZXing(const CreatorOptions& opts, const ByteArray& ba)
 {
-	const BarcodeFormat format = opts.format();
+	using enum SymbologyID;
 
-	auto i = FindIf(barcodeFormat2SymbologyIdentifier, [format](auto& v) { return v.format == format; });
-	assert(i != std::end(barcodeFormat2SymbologyIdentifier));
-	SymbologyIdentifier ret = i->si;
+	const Symbology symbology = opts.symbology();
 
-	if ((BarcodeFormat::EAN13 | BarcodeFormat::UPCA | BarcodeFormat::UPCE).testFlag(format)) {
+	auto i = FindIf(symbology2SymbologyIdentifier, [symbology](auto& v) { return v.symbology == symbology; });
+	SymbologyIdentifier ret = i != std::end(symbology2SymbologyIdentifier) ? i->si : SymbologyIdentifier{symbology.idStr()[1], '0'};
+
+	if (symbology.is(EAN13, UPCA, UPCE)) {
 		if (ba.size() > 13) // Have EAN-2/5 add-on?
 			ret.modifier = '3'; // Combined packet, EAN-13, UPC-A, UPC-E, with add-on
-	} else if (format == BarcodeFormat::Code39) {
+	} else if (symbology.is(Code39)) {
 		if (FindIf(ba, iscntrl) != ba.end()) // Extended Code 39?
 			ret.modifier = static_cast<char>(ret.modifier + 4);
-	} else if (opts.gs1() && SupportsGS1(format)) {
-		if ((BarcodeFormat::Aztec | BarcodeFormat::Code128).testFlag(format))
+	} else if (opts.gs1() && symbology.is(Symbology::GS1)) {
+		if (symbology.is(Aztec, Code128))
 			ret.modifier = '1';
-		else if (format == BarcodeFormat::DataMatrix)
+		else if (symbology.is(DataMatrix))
 			ret.modifier = '2';
-		else if ((BarcodeFormat::QRCode | BarcodeFormat::RMQRCode).testFlag(format))
+		else if (symbology.is(QRCode, RMQRCode))
 			ret.modifier = '3';
 		ret.aiFlag = AIFlag::GS1;
 	}
@@ -294,6 +257,8 @@ static std::string BinaryToUtf8(ByteView ba)
 
 zint_symbol* CreatorOptions::zint() const
 {
+	using enum SymbologyID;
+
 	auto& zint = d->zint;
 
 	if (!zint) {
@@ -302,37 +267,38 @@ zint_symbol* CreatorOptions::zint() const
 #endif
 		zint.reset(ZBarcode_Create());
 
-		auto i = FindIf(barcodeFormatZXing2Zint, [zxing = format()](auto& v) { return v.zxing == zxing; });
-		if (i == std::end(barcodeFormatZXing2Zint))
-			throw std::invalid_argument("unsupported barcode format: " + ToString(format()));
+		switch (symbology().id()) {
+#define DECLARE_SYM_NAME_CASE(NAME, ID, FLAGS, ZINT, ENABLED, HRI) \
+	case SymbologyID(ZX_SYMBOLOGY_ID(ID)): zint->symbology = ZINT; break;
+			ZX_SYMBOLOGY_LIST(DECLARE_SYM_NAME_CASE)
+#undef DECLARE_SYM_NAME_CASE
+		};
 
-		if (format() == BarcodeFormat::Code128 && gs1())
+		if (symbology() == Code128 && gs1())
 			zint->symbology = BARCODE_GS1_128;
-		else if (format() == BarcodeFormat::DataBar && stacked())
+		else if (symbology() == DataBar && stacked())
 			zint->symbology = BARCODE_DBAR_OMNSTK;
-		else if (format() == BarcodeFormat::DataBarExpanded && stacked())
+		else if (symbology() == DataBarExp && stacked())
 			zint->symbology = BARCODE_DBAR_EXPSTK;
-		else
-			zint->symbology = i->zint;
 
 		zint->scale = 0.5f;
 
 		if (auto val = ecLevel(); val)
 			zint->option_1 = ParseECLevel(zint->symbology, *val);
 
-		if (auto val = version(); val && !IsLinearBarcode(format()))
+		if (auto val = version(); val && !symbology().is(Symbology::Linear))
 			zint->option_2 = *val;
 
-		if (auto val = columns(); val && (BarcodeFormat::DataBarExpanded | BarcodeFormat::PDF417).testFlag(format()))
+		if (auto val = columns(); val && symbology().is(DataBarExp, PDF417, MicroPDF417, CompactPDF417))
 			zint->option_2 = *val;
 
-		if (auto val = rows(); val && (BarcodeFormat::DataBarExpanded | BarcodeFormat::PDF417).testFlag(format()))
+		if (auto val = rows(); val && symbology().is(DataBarExp, PDF417))
 			zint->option_3 = *val;
 
-		if (auto val = dataMask(); val && (BarcodeFormat::QRCode | BarcodeFormat::MicroQRCode).testFlag(format()))
+		if (auto val = dataMask(); val && symbology().is(QRCode, MicroQRCode))
 			zint->option_3 = (zint->option_3 & 0xFF) | (*val + 1) << 8;
 
-		if (format() == BarcodeFormat::DataMatrix)
+		if (symbology().is(DataMatrix))
 			zint->option_3 = (forceSquare() ? DM_SQUARE : DM_DMRE) | DM_ISO_144;
 	}
 
@@ -347,7 +313,7 @@ Barcode CreateBarcode(const void* data, int size, int mode, const CreatorOptions
 {
 	auto zint = opts.zint();
 
-	zint->input_mode = mode == UNICODE_MODE && opts.gs1() && SupportsGS1(opts.format()) ? GS1_MODE : mode;
+	zint->input_mode = mode == UNICODE_MODE && opts.gs1() && opts.symbology().is(Symbology::GS1) ? GS1_MODE : mode;
 	if (mode == UNICODE_MODE && static_cast<const char*>(data)[0] != '[')
 		zint->input_mode |= GS1PARENS_MODE;
 	zint->output_options |= OUT_BUFFER_INTERMEDIATE | BARCODE_NO_QUIET_ZONES | BARCODE_CONTENT_SEGS;
@@ -383,12 +349,12 @@ Barcode CreateBarcode(const void* data, int size, int mode, const CreatorOptions
 				   [](unsigned char v) { return (v == '0') * 0xff; });
 
 	auto res = ReadBarcode({buffer.data(), zint->bitmap_width, zint->bitmap_height, ImageFormat::Lum},
-						   ReaderOptions().formats(opts.format()).isPure(true).binarizer(Binarizer::BoolCast));
+						   ReaderOptions().formats(opts.symbology()).isPure(true).binarizer(Binarizer::BoolCast));
 #else
 	assert(zint->content_seg_count == 1);
 	const auto& content_seg = zint->content_segs[0];
 	const size_t content_seg_len =
-		static_cast<size_t>(content_seg.length - (opts.format() == BarcodeFormat::Code93 && content_seg.length >= 2 ? 2 : 0));
+		static_cast<size_t>(content_seg.length - (opts.symbology() == Symbology::Code93 && content_seg.length >= 2 ? 2 : 0));
 
 	Content content;
 
@@ -422,7 +388,7 @@ Barcode CreateBarcode(const void* data, int size, int mode, const CreatorOptions
 	int left, top, width, height;
 	bits.findBoundingBox(left, top, width, height);
 
-	auto res = MatrixBarcode(std::move(decRes), {std::move(bits), Rectangle<PointI>(left, top, width, height)}, opts.format());
+	auto res = MatrixBarcode(std::move(decRes), {std::move(bits), Rectangle<PointI>(left, top, width, height)}, opts.symbology());
 #endif
 
 	res.zint = std::move(opts.d->zint);
@@ -458,26 +424,26 @@ static Barcode CreateBarcode(BitMatrix&& bits, std::string_view contents, const 
 #ifdef ZXING_READERS
 	(void)contents; // unused
 	return ReadBarcode({img.data(), img.width(), img.height(), ImageFormat::Lum},
-					   ReaderOptions().formats(opts.format()).isPure(true).binarizer(Binarizer::BoolCast));
+					   ReaderOptions().formats(opts.symbology()).isPure(true).binarizer(Binarizer::BoolCast));
 #else
 	Content content;
 	content.append(contents);
 
 	DecoderResult decRes(std::move(content));
 	DetectorResult detRes(std::move(bits), Rectangle<PointI>(0, 0, bits.width(), bits.height()));
-	return MatrixBarcode(std::move(decRes), std::move(detRes), opts.format());
+	return MatrixBarcode(std::move(decRes), std::move(detRes), opts.symbology());
 #endif
 }
 
 Barcode CreateBarcodeFromText(std::string_view contents, const CreatorOptions& opts)
 {
-	auto writer = MultiFormatWriter(opts.format()).setMargin(0);
+	auto writer = MultiFormatWriter(opts.symbology()).setMargin(0);
 	if (auto ecLevel = opts.ecLevel(); ecLevel && ecLevel->size() == 1 && strchr("012345678", (*ecLevel)[0]))
 		writer.setEccLevel(std::stoi(*ecLevel));
 	if (!IsAscii({(const uint8_t*)contents.data(), contents.size()}))
 		writer.setEncoding(CharacterSet::UTF8); // write UTF8 (ECI value 26) for maximum compatibility
 
-	return CreateBarcode(writer.encode(std::string(contents), 0, IsLinearBarcode(opts.format()) ? 50 : 0), contents, opts);
+	return CreateBarcode(writer.encode(std::string(contents), 0, opts.symbology().is(Symbology::Linear) ? 50 : 0), contents, opts);
 }
 
 #if __cplusplus > 201703L
@@ -493,12 +459,12 @@ Barcode CreateBarcodeFromBytes(const void* data, int size, const CreatorOptions&
 	for (uint8_t c : ByteView(data, size))
 		bytes.push_back(c);
 
-	auto writer = MultiFormatWriter(opts.format()).setMargin(0);
+	auto writer = MultiFormatWriter(BarcodeFormatFromSymbology(opts.symbology())).setMargin(0);
 	if (auto ecLevel = opts.ecLevel(); ecLevel && ecLevel->size() == 1 && strchr("012345678", (*ecLevel)[0]))
 		writer.setEccLevel(std::stoi(*ecLevel));
 	writer.setEncoding(CharacterSet::BINARY);
 
-	return CreateBarcode(writer.encode(bytes, 0, IsLinearBarcode(opts.format()) ? 50 : 0), {(const char*)data, (size_t)size}, opts);
+	return CreateBarcode(writer.encode(bytes, 0, IsLinearBarcode(opts.symbology()) ? 50 : 0), {(const char*)data, (size_t)size}, opts);
 }
 
 #endif // ZXING_USE_ZINT

@@ -146,13 +146,13 @@ TEST(GTINTest, CountryIdentifierUPCE)
 {
 	// From test/samples/upce-*/
 	EXPECT_EQ(LookupCountryIdentifier("01234565"), "US"); // 001-019 US
-	EXPECT_EQ(LookupCountryIdentifier("01234565", BarcodeFormat::UPCE), "US"); // 001-019 US
+	EXPECT_EQ(LookupCountryIdentifier("01234565", Symbology::UPCE), "US"); // 001-019 US
 	EXPECT_EQ(LookupCountryIdentifier("00123457"), "US"); // 0001-0009 US
-	EXPECT_EQ(LookupCountryIdentifier("00123457", BarcodeFormat::UPCE), "US"); // 0001-0009 US
+	EXPECT_EQ(LookupCountryIdentifier("00123457", Symbology::UPCE), "US"); // 0001-0009 US
 	EXPECT_EQ(LookupCountryIdentifier("05096893"), "US"); // 001-019 US
-	EXPECT_EQ(LookupCountryIdentifier("05096893", BarcodeFormat::UPCE), "US"); // 001-019 US
+	EXPECT_EQ(LookupCountryIdentifier("05096893", Symbology::UPCE), "US"); // 001-019 US
 	EXPECT_EQ(LookupCountryIdentifier("04963406 01"), "US"); // 001-019 US
-	EXPECT_EQ(LookupCountryIdentifier("04963406 01", BarcodeFormat::UPCE), "US"); // 001-019 US
+	EXPECT_EQ(LookupCountryIdentifier("04963406 01", Symbology::UPCE), "US"); // 001-019 US
 
 	// Other
 	// 0000000, 0000001-0000099 and 00001-00009 not possible for UPC-E
@@ -169,7 +169,7 @@ TEST(GTINTest, CountryIdentifierUPCE)
 
 TEST(GTINTest, CountryIdentifierEAN8)
 {
-	auto format = BarcodeFormat::EAN8; // Require BarcodeFormat for EAN-8 to be distinguished from UPC-E
+	auto format = Symbology::EAN8; // Require Symbology for EAN-8 to be distinguished from UPC-E
 
 	// From test/samples/ean8-*/
 	EXPECT_EQ(LookupCountryIdentifier("48512343", format), "AM");

@@ -16,49 +16,49 @@ using namespace std::literals;
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-void savePng(ImageView iv, BarcodeFormat format)
+void savePng(ImageView iv, Symbology symbology)
 {
-	stbi_write_png((ToString(format) + ".png"s).c_str(), iv.width(), iv.height(), iv.pixStride(), iv.data(), iv.rowStride());
+	stbi_write_png((std::string(symbology.variant()) + ".png"s).c_str(), iv.width(), iv.height(), iv.pixStride(), iv.data(), iv.rowStride());
 }
 
 int main()
 {
 	std::string text = "http://www.google.com/";
-	for (auto format : {
+	for (auto symbology : {
 #ifdef ZXING_ENABLE_AZTEC
-		BarcodeFormat::Aztec,
+		Symbology::Aztec,
 #endif
 #ifdef ZXING_ENABLE_DATAMATRIX
-		BarcodeFormat::DataMatrix,
+		Symbology::DataMatrix,
 #endif
 #ifdef ZXING_ENABLE_PDF417
-		BarcodeFormat::PDF417,
+		Symbology::PDF417,
 #endif
 #ifdef ZXING_ENABLE_QRCODE
-		BarcodeFormat::QRCode,
+		Symbology::QRCode,
 #endif
 	})
 	{
-		savePng(CreateBarcodeFromText(text, format).symbol(), format);
+		savePng(CreateBarcodeFromText(text, symbology).symbol(), symbology);
 	}
 
 #ifdef ZXING_ENABLE_1D
 	text = "012345678901234567890123456789";
-	using FormatSpecs = std::vector<std::pair<BarcodeFormat, size_t>>;
-	for (const auto& [format, length] : FormatSpecs({
-//		{BarcodeFormat::Codabar, 0},
-		{BarcodeFormat::Code39, 0},
-		{BarcodeFormat::Code93, 0},
-		{BarcodeFormat::Code128, 0},
-		{BarcodeFormat::EAN8, 7},
-		{BarcodeFormat::EAN13, 12},
-		{BarcodeFormat::ITF, 0},
-		{BarcodeFormat::UPCA, 11},
-		{BarcodeFormat::UPCE, 7}
+	using SymSpecs = std::vector<std::pair<Symbology, size_t>>;
+	for (const auto& [symbology, length] : SymSpecs({
+//		{Symbology::Codabar, 0},
+		{Symbology::Code39, 0},
+		{Symbology::Code93, 0},
+		{Symbology::Code128, 0},
+		{Symbology::EAN8, 7},
+		{Symbology::EAN13, 12},
+		{Symbology::ITF, 0},
+		{Symbology::UPCA, 11},
+		{Symbology::UPCE, 7}
 	}))
 	{
 		auto input = length > 0 ? text.substr(0, length) : text;
-		savePng(WriteBarcodeToImage(CreateBarcodeFromText(input, format)), format);
+		savePng(WriteBarcodeToImage(CreateBarcodeFromText(input, symbology)), symbology);
 	}
 #endif
 }

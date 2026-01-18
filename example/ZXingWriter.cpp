@@ -31,7 +31,7 @@ using namespace ZXing;
 static void PrintUsage(const char* exePath)
 {
 	std::cout << "Usage: " << exePath
-			  << " [-options <creator-options>] [-scale <factor>] [-binary] [-noqz] [-hrt] [-invert] <format> <text> <output>\n"
+			  << " [-options <creator-options>] [-scale <factor>] [-binary] [-noqz] [-hrt] [-invert] <symbology> <text> <output>\n"
 			  << "    -options   Comma separated list of symbology specific options and flags\n"
 			  << "    -scale     module size of generated image / negative numbers mean 'target size in pixels'\n"
 //			  << "    -encoding  Encoding used to encode input text\n"
@@ -42,21 +42,17 @@ static void PrintUsage(const char* exePath)
 			  << "    -help      Print usage information\n"
 			  << "    -version   Print version information\n"
 			  << "\n"
-			  << "Supported formats are:\n";
-#ifdef ZXING_USE_ZINT
-	for (auto f : BarcodeFormats::all())
-#else
-	for (auto f : BarcodeFormatsFromString("Aztec Codabar Code39 Code93 Code128 DataMatrix EAN8 EAN13 ITF PDF417 QRCode UPCA UPCE"))
-#endif
-		std::cout << "    " << ToString(f) << "\n";
+			  << "Supported symbologies (and their variants) are:\n";
+	for (auto s : Symbologies::all(Symbology::Creatable))
+		std::cout << "    " << s.variant() << "\n";
 
-	std::cout << "Format can be lowercase letters, with or without '-'.\n"
+	std::cout << "Symbology can be lowercase letters, with or without any of ' -_/'.\n"
 			  << "Output format is determined by file name, supported are png, jpg and svg.\n";
 }
 
 struct CLI
 {
-	BarcodeFormat format = BarcodeFormat::None;
+	Symbology symbology = Symbology::None;
 	int scale = 0;
 	std::string input;
 	std::string outPath;
@@ -103,9 +99,9 @@ static bool ParseOptions(int argc, char* argv[], CLI& cli)
 			std::cout << "ZXingWriter " << ZXING_VERSION_STR << "\n";
 			exit(0);
 		} else if (nonOptArgCount == 0) {
-			cli.format = BarcodeFormatFromString(argv[i]);
-			if (cli.format == BarcodeFormat::None) {
-				std::cerr << "Unrecognized format: " << argv[i] << std::endl;
+			cli.symbology = Symbology(argv[i]);
+			if (cli.symbology == Symbology::None) {
+				std::cerr << "Unrecognized symbology: " << argv[i] << std::endl;
 				return false;
 			}
 			++nonOptArgCount;
@@ -153,7 +149,7 @@ int main(int argc, char* argv[])
 
 	try {
 #if 1
-		auto cOpts = CreatorOptions(cli.format, cli.options);
+		auto cOpts = CreatorOptions(cli.symbology, cli.options);
 		auto barcode = cli.inputIsFile ? CreateBarcodeFromBytes(ReadFile(cli.input), cOpts) : CreateBarcodeFromText(cli.input, cOpts);
 
 		auto wOpts = WriterOptions().scale(cli.scale).addQuietZones(cli.addQZs).addHRT(cli.addHRT).invert(cli.invert).rotate(0);
@@ -163,7 +159,8 @@ int main(int argc, char* argv[])
 			std::cout.setf(std::ios::boolalpha);
 			std::cout << "Text:       \"" << barcode.text() << "\"\n"
 					  << "Bytes:      " << barcode.text(TextMode::Hex) << "\n"
-					  << "Format:     " << ToString(barcode.format()) << "\n"
+					  << "Symbology:  " << barcode.symbology().name() << "\n"
+					  << "Variant:    " << barcode.symbology().variant() << "\n"
 					  << "Identifier: " << barcode.symbologyIdentifier() << "\n"
 					  << "Content:    " << ToString(barcode.contentType()) << "\n"
 					  << "HasECI:     " << barcode.hasECI() << "\n"

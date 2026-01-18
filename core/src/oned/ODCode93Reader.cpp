@@ -129,7 +129,7 @@ BarcodeData Code93Reader::decodePattern(int rowNumber, PatternView& next, std::u
 	SymbologyIdentifier symbologyIdentifier = {'G', '0'};
 
 	int xStop = next.pixelsTillEnd();
-	return LinearBarcode(BarcodeFormat::Code93, txt, rowNumber, xStart, xStop, symbologyIdentifier, error);
+	return LinearBarcode(Symbology::Code93, txt, rowNumber, xStart, xStop, symbologyIdentifier, error);
 }
 
 } // namespace ZXing::OneD

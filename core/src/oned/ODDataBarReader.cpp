@@ -171,7 +171,7 @@ BarcodeData DataBarReader::decodePattern(int rowNumber, PatternView& next, std::
 		if (IsLeftPair(next)) {
 			if (auto leftPair = ReadPair(next, false); leftPair && next.shift(FULL_PAIR_SIZE) && IsRightPair(next)) {
 				if (auto rightPair = ReadPair(next, true); rightPair && ChecksumIsValid(leftPair, rightPair)) {
-					return LinearBarcode(BarcodeFormat::DataBar, ConstructText(leftPair, rightPair), rowNumber, leftPair.xStart,
+					return LinearBarcode(Symbology::DataBar, ConstructText(leftPair, rightPair), rowNumber, leftPair.xStart,
 										 rightPair.xStop, {'e', '0', 0, AIFlag::GS1});
 				}
 			}
@@ -208,7 +208,7 @@ BarcodeData DataBarReader::decodePattern(int rowNumber, PatternView& next, std::
 				// Symbology identifier ISO/IEC 24724:2011 Section 9 and GS1 General Specifications 5.1.3 Figure 5.1.3-2
 				auto res = BarcodeData{.content = Content(ByteArray{ConstructText(leftPair, rightPair)}, {'e', '0', 0, AIFlag::GS1}),
 									   .position = EstimatePosition(leftPair, rightPair),
-									   .format = BarcodeFormat::DataBar,
+									   .symbology = Symbology::DataBar,
 									   .lineCount = EstimateLineCount(leftPair, rightPair)};
 
 				prevState->leftPairs.erase(leftPair);

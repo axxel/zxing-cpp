@@ -73,6 +73,8 @@ using ZXing::TextMode;
 using ZXing::ReaderOptions;
 using ZXing::Binarizer;
 using ZXing::BarcodeFormats;
+using ZXing::Symbology;
+using ZXing::Symbologies;
 
 Q_ENUM_NS(BarcodeFormat)
 Q_ENUM_NS(ContentType)

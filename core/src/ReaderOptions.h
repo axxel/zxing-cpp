@@ -9,6 +9,7 @@
 
 #include "BarcodeFormat.h"
 #include "CharacterSet.h"
+#include "Symbology.h"
 #include "Version.h"
 
 #include <string_view>
@@ -95,8 +96,19 @@ public:
 	__VA_ARGS__ inline ReaderOptions& SETTER(TYPE v) & { return NAME(v); } \
 	__VA_ARGS__ inline ReaderOptions&& SETTER(TYPE v) && { return std::move(*this).NAME(v); }
 
+	/// Specify a set of Symbologies that should be searched for, the default is all supported symbologies.
+	const Symbologies& symbologies() const noexcept;
+	ReaderOptions& symbologies(Symbologies&& v) &;
+	ReaderOptions&& symbologies(Symbologies&& v) &&;
+	ReaderOptions& symbologies(const Symbologies& v) & { return symbologies(Symbologies(v)); }
+	ReaderOptions&& symbologies(const Symbologies& v) && { return std::move(*this).symbologies(Symbologies(v)); }
+	inline ReaderOptions& setSymbologies(Symbologies&& v) & { return symbologies(std::move(v)); }
+	inline ReaderOptions&& setSymbologies(Symbologies&& v) && { return std::move(*this).symbologies(std::move(v)); }
+	inline ReaderOptions& setSymbologies(const Symbologies& v) & { return symbologies(Symbologies(v)); }
+	inline ReaderOptions&& setSymbologies(const Symbologies& v) && { return std::move(*this).symbologies(Symbologies(v)); }
+
 	/// Specify a set of BarcodeFormats that should be searched for, the default is all supported formats.
-	ZX_PROPERTY(BarcodeFormats, formats, setFormats)
+	ZX_PROPERTY(BarcodeFormats, formats, setFormats)//, [[deprecated]])
 
 	/// Spend more time to try to find a barcode; optimize for accuracy, not speed.
 	ZX_PROPERTY(bool, tryHarder, setTryHarder)
@@ -164,8 +176,10 @@ public:
 #pragma GCC diagnostic pop
 #endif
 
-	/// Check if a specific format is enabled in the formats set
-	bool hasFormat(BarcodeFormats f) const noexcept;
+	/// Check if a specific symbology is enabled in the symbologies set
+	bool hasSymbology(const Symbologies& s) const noexcept;
+
+	[[deprecated]] bool hasFormat(BarcodeFormats f) const noexcept;
 };
 
 } // ZXing

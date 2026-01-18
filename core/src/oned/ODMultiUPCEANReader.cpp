@@ -7,13 +7,13 @@
 
 #include "ODMultiUPCEANReader.h"
 
-#include "BarcodeFormat.h"
 #include "BitArray.h"
 #include "ReaderOptions.h"
 #include "GTIN.h"
 #include "ODUPCEANCommon.h"
 #include "Barcode.h"
 #include "JSON.h"
+#include "Symbology.h"
 #include "SymbologyIdentifier.h"
 
 #include <cmath>
@@ -117,10 +117,10 @@ struct PartialResult
 {
 	std::string txt;
 	PatternView end;
-	BarcodeFormat format = BarcodeFormat::None;
+	Symbology sym = Symbology::None;
 
 	PartialResult() { txt.reserve(14); }
-	bool isValid() const { return format != BarcodeFormat::None; }
+	bool isValid() const { return sym != Symbology::None; }
 };
 
 bool _ret_false_debug_helper()
@@ -151,7 +151,7 @@ static bool EAN13(PartialResult& res, PatternView begin)
 	res.txt[0] = ToDigit(i);
 
 	res.end = end;
-	res.format = BarcodeFormat::EAN13;
+	res.sym = Symbology::EAN13;
 	return true;
 }
 
@@ -185,7 +185,7 @@ static bool EAN8(PartialResult& res, PatternView begin)
 	CHECK(DecodeDigits(4, next, res.txt));
 
 	res.end = end;
-	res.format = BarcodeFormat::EAN8;
+	res.sym = Symbology::EAN8;
 	return true;
 }
 
@@ -215,7 +215,7 @@ static bool UPCE(PartialResult& res, PatternView begin)
 	res.txt += ToDigit(i % 10);
 
 	res.end = end;
-	res.format = BarcodeFormat::UPCE;
+	res.sym = Symbology::UPCE;
 	return true;
 }
 
@@ -260,7 +260,7 @@ static bool AddOn(PartialResult& res, PatternView begin, int digitCount)
 		constexpr int CHECK_DIGIT_ENCODINGS[] = {0x18, 0x14, 0x12, 0x11, 0x0C, 0x06, 0x03, 0x0A, 0x09, 0x05};
 		CHECK(Ean5Checksum(res.txt) == IndexOf(CHECK_DIGIT_ENCODINGS, lgPattern));
 	}
-	res.format = BarcodeFormat::Any; // make sure res.format is valid, see below
+	res.sym = Symbology::EANUPC; // make sure res.sym is valid, see below
 	return true;
 }
 
@@ -275,15 +275,15 @@ BarcodeData MultiUPCEANReader::decodePattern(int rowNumber, PatternView& next, s
 	PartialResult res;
 	auto begin = next;
 	
-	if (!(((_opts.hasFormat(BarcodeFormat::EAN13 | BarcodeFormat::UPCA)) && EAN13(res, begin)) ||
-		  (_opts.hasFormat(BarcodeFormat::EAN8) && EAN8(res, begin)) ||
-		  (_opts.hasFormat(BarcodeFormat::UPCE) && UPCE(res, begin))))
+	if (!(((_opts.hasSymbology(Symbology::EAN13 | Symbology::UPCA)) && EAN13(res, begin)) ||
+		  (_opts.hasSymbology(Symbology::EAN8) && EAN8(res, begin)) ||
+		  (_opts.hasSymbology(Symbology::UPCE) && UPCE(res, begin))))
 		return {};
 
 	// ISO/IEC 15420:2009 (& GS1 General Specifications 5.1.3) states that the content for "]E0" should be 13 digits,
 	// i.e. converted to EAN-13 if UPC-A/E
 	std::string upceTxt;
-	if (res.format == BarcodeFormat::UPCE) {
+	if (res.sym == Symbology::UPCE) {
 		upceTxt = res.txt;
 		res.txt = "0" + UPCEANCommon::ConvertUPCEtoUPCA(res.txt);
 	}
@@ -291,15 +291,15 @@ BarcodeData MultiUPCEANReader::decodePattern(int rowNumber, PatternView& next, s
 	Error error = !GTIN::IsCheckDigitValid(res.txt) ? ChecksumError() : Error();
 
 	// if we explicitly excluded EAN13, don't return an EAN13 symbol
-	if (res.format == BarcodeFormat::EAN13 && !_opts.hasFormat(BarcodeFormat::EAN13)) {
+	if (res.sym == Symbology::EAN13 && !_opts.hasSymbology(Symbology::EAN13)) {
 		if (res.txt.front() == '0')
-			res.format = BarcodeFormat::UPCA;
+			res.sym = Symbology::UPCA;
 		else
 			return {};
 	}
 
 	// Symbology identifier modifiers ISO/IEC 15420:2009 Annex B Table B.1
-	SymbologyIdentifier symbologyIdentifier = {'E', res.format == BarcodeFormat::EAN8 ? '4' : '0'};
+	SymbologyIdentifier symbologyIdentifier = {'E', res.sym == Symbology::EAN8 ? '4' : '0'};
 
 	next = res.end;
 
@@ -318,7 +318,7 @@ BarcodeData MultiUPCEANReader::decodePattern(int rowNumber, PatternView& next, s
 	if (_opts.eanAddOnSymbol() == EanAddOnSymbol::Require && !addOnRes.isValid())
 		return {};
 
-	return LinearBarcode(res.format, res.txt, rowNumber, begin.pixelsInFront(), next.pixelsTillEnd(), symbologyIdentifier, error,
+	return LinearBarcode(res.sym, res.txt, rowNumber, begin.pixelsInFront(), next.pixelsTillEnd(), symbologyIdentifier, error,
 						 JsonProp(BarcodeExtra::UPCE, upceTxt) + JsonProp(BarcodeExtra::EanAddOn, addOnRes.txt));
 }
 

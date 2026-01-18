@@ -55,6 +55,7 @@ struct ReaderOptions::Data
 	uint8_t maxNumberOfSymbols    = 0xff;
 	uint16_t downscaleThreshold   = 500;
 	BarcodeFormats formats        = BarcodeFormat::None;
+	Symbologies symbologies       = {};
 
 	Data()
 		: tryHarder(1),
@@ -92,6 +93,10 @@ ReaderOptions& ReaderOptions::operator=(const ReaderOptions& other)
 // move
 ReaderOptions::ReaderOptions(ReaderOptions&&) = default;
 ReaderOptions& ReaderOptions::operator=(ReaderOptions&&) = default;
+
+const Symbologies& ReaderOptions::symbologies() const noexcept { return d->symbologies; }
+ReaderOptions& ReaderOptions::symbologies(Symbologies&& v) & { return (void)(d->symbologies = std::move(v)), *this; }
+ReaderOptions&& ReaderOptions::symbologies(Symbologies&& v) && { return (void)(d->symbologies = std::move(v)), std::move(*this); }
 
 #define ZX_PROPERTY(TYPE, NAME, SETTER) \
 	TYPE ReaderOptions::NAME() const noexcept { return d->NAME; } \
@@ -138,6 +143,10 @@ bool ReaderOptions::hasFormat(BarcodeFormats f) const noexcept
 	return d->formats.testFlags(f) || d->formats.empty();
 }
 
+bool ReaderOptions::hasSymbology(const Symbologies& s) const noexcept
+{
+	return d->symbologies.empty() || std::any_of(s.begin(), s.end(), [this](Symbology s) { return d->symbologies.contains(s); });
+}
 
 // ==============================================================================
 // ReadBarcode implementation
@@ -281,10 +290,10 @@ Barcodes ReadBarcodes(const ImageView& _iv, const ReaderOptions& opts)
 
 	std::unique_ptr<MultiFormatReader> closedReader;
 #ifdef ZXING_EXPERIMENTAL_API
-	auto formatsBenefittingFromClosing = BarcodeFormat::Aztec | BarcodeFormat::DataMatrix | BarcodeFormat::QRCode | BarcodeFormat::MicroQRCode;
+	auto benefittingFromClosing = Symbology::Aztec | Symbology::DataMatrix | Symbology::QRCode | Symbology::MicroQRCode;
 	ReaderOptions closedOptions = opts;
-	if (opts.tryDenoise() && opts.hasFormat(formatsBenefittingFromClosing) && _iv.height() >= 3) {
-		closedOptions.formats((opts.formats().empty() ? BarcodeFormat::Any : opts.formats()) & formatsBenefittingFromClosing);
+	if (opts.tryDenoise() && opts.hasSymbology(benefittingFromClosing) && _iv.height() >= 3) {
+		closedOptions.symbologies(opts.symbologies().empty() ? benefittingFromClosing : benefittingFromClosing & opts.symbologies());
 		closedReader = std::make_unique<MultiFormatReader>(closedOptions);
 	}
 #endif

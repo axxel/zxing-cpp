@@ -79,8 +79,9 @@ int main(int argc, char** argv)
 #ifdef ZXING_WRITERS
 		if (formats == ZXing_BarcodeFormat_Invalid)
 			return 2;
+		ZXing_Symbology symbology = ZXing_Symbology_Test;
 		fprintf(stderr, "Using '%s' as text input to create barcode\n", filename);
-		ZXing_CreatorOptions* cOpts = ZXing_CreatorOptions_new(formats);
+		ZXing_CreatorOptions* cOpts = ZXing_CreatorOptions_new(symbology);
 		CHECK(cOpts)
 		if (argc >= 4)
 			ZXing_CreatorOptions_setOptions(cOpts, argv[3]);

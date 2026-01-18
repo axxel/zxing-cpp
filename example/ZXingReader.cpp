@@ -4,6 +4,9 @@
 */
 // SPDX-License-Identifier: Apache-2.0
 
+#include "Symbology.h"
+#include "StdPrint.h"
+
 #include "GTIN.h"
 #include "ZXingCpp.h"
 
@@ -42,8 +45,8 @@ static void PrintUsage(const char* exePath)
 			  << "    -norotate  Don't try rotated image during detection (faster)\n"
 			  << "    -noinvert  Don't search for inverted codes during detection (faster)\n"
 			  << "    -noscale   Don't try downscaled images during detection (faster)\n"
-			  << "    -formats <FORMAT[,...]>\n"
-			  << "               Only detect given format(s) (faster)\n"
+			  << "    -symbologies <SYMBOLOGY[,...]>\n"
+			  << "               Only detect given symbology(s) (faster)\n"
 			  << "    -single    Stop after the first barcode is detected (faster)\n"
 			  << "    -ispure    Assume the image contains only a 'pure'/perfect code (faster)\n"
 			  << "    -errors    Include barcodes with errors (like checksum error)\n"
@@ -63,11 +66,11 @@ static void PrintUsage(const char* exePath)
 			  << "    -help      Print usage information\n"
 			  << "    -version   Print version information\n"
 			  << "\n"
-			  << "Supported formats are:\n";
-	for (auto f : BarcodeFormats::all()) {
-		std::cout << "    " << ToString(f) << "\n";
+			  << "Supported symbologies are:\n";
+	for (auto s : Symbologies::all(Symbology::Readable)) {
+		std::cout << "    " << s.variant() << "\n";
 	}
-	std::cout << "Formats can be lowercase, with or without '-', separated by ',' and/or '|'\n";
+	std::cout << "Symbologies can be lowercase, with or without any of ' -_/', separated by ',' or '|'\n";
 }
 
 static bool ParseOptions(int argc, char* argv[], ReaderOptions& options, CLI& cli)
@@ -93,11 +96,11 @@ static bool ParseOptions(int argc, char* argv[], ReaderOptions& options, CLI& cl
 			options.binarizer(Binarizer::FixedThreshold);
 		} else if (is("-errors")) {
 			options.returnErrors(true);
-		} else if (is("-formats")) {
+		} else if (is("-formats") || is("-symbologies")) {
 			if (++i == argc)
 				return false;
 			try {
-				options.formats(BarcodeFormatsFromString(argv[i]));
+				options.symbologies(Symbologies(argv[i]));
 			} catch (const std::exception& e) {
 				std::cerr << "Error: " << e.what() << "\n\n";
 				return false;
@@ -184,6 +187,36 @@ void drawRect(const ImageView& image, const Position& pos, bool error)
 
 int main(int argc, char* argv[])
 {
+#if 0
+	auto s = Symbology::None;
+	std::println("Symbology: #=0x{:X}, id='{}', name='{}'", (uint32_t)s.id(), s.idStr(), s.name());
+
+	switch (s)
+	{
+	case SymbologyID(0):
+		std::println("yes");
+		break;
+	
+	default:
+		std::println("no");
+		break;
+	}
+
+	auto ss = Symbology::Aztec | Symbology::QRCode | Symbology::DataMatrix;
+	ss = Symbologies("]Qr]d ]E1");
+	ss = Symbologies::all(Symbology::Linear);
+
+	// for (auto s : ss) {
+	// 	std::println("Symbology: 0x{:X} {} name = {:<10} variant = {}", (uint32_t)s.id(), s.idStr(), s.name(), s.variant());
+	// }
+
+	if (ss.contains(Symbology::QRCode)) {
+		std::println("Contains QRCode");
+	}
+
+	return 0;
+#endif
+
 	ReaderOptions options;
 	CLI cli;
 	Barcodes allBarcodes;
@@ -242,13 +275,13 @@ int main(int argc, char* argv[])
 			}
 
 			if (cli.json) {
-				if (barcode.format() != ZXing::BarcodeFormat::None)
+				if (barcode.symbology() != Symbology::None)
 					std::cout << "{\"FilePath\":\"" << filePath << "\"," << barcode.extra("ALL").substr(1) << "\n";
 				continue;
 			}
 
 			if (cli.oneLine) {
-				std::cout << filePath << " " << ToString(barcode.format());
+				std::cout << filePath << " " << barcode.symbology().variant();
 				if (barcode.isValid())
 					std::cout << " \"" << barcode.text(TextMode::Escaped) << "\"";
 				else if (barcode.error())
@@ -266,14 +299,15 @@ int main(int argc, char* argv[])
 				firstFile = false;
 			}
 
-			if (barcode.format() == BarcodeFormat::None) {
+			if (barcode.symbology() == Symbology::None) {
 				std::cout << "No barcode found\n";
 				continue;
 			}
 
 			std::cout << "Text:       \"" << barcode.text() << "\"\n"
 					  << "Bytes:      " << barcode.text(options.textMode() == TextMode::ECI ? TextMode::HexECI : TextMode::Hex) << "\n"
-					  << "Format:     " << ToString(barcode.format()) << "\n"
+					  << "Symbology:  " << barcode.symbology().name() << "\n"
+					  << "Variant:    " << barcode.symbology().variant() << "\n"
 					  << "Identifier: " << barcode.symbologyIdentifier() << "\n"
 					  << "Content:    " << ToString(barcode.contentType()) << "\n"
 					  << "HasECI:     " << barcode.hasECI() << "\n"
@@ -294,14 +328,14 @@ int main(int argc, char* argv[])
 			if (barcode.lineCount())
 				std::cout << "Lines:      " << barcode.lineCount() << "\n";
 
-			if ((BarcodeFormat::EAN13 | BarcodeFormat::EAN8 | BarcodeFormat::UPCA | BarcodeFormat::UPCE)
-					.testFlag(barcode.format())) {
-				printOptional("Country:    ", GTIN::LookupCountryIdentifier(barcode.text(), barcode.format()));
+			if ((Symbology::EAN13 | Symbology::EAN8 | Symbology::UPCA | Symbology::UPCE)
+					.contains(barcode.symbology())) {
+				printOptional("Country:    ", GTIN::LookupCountryIdentifier(barcode.text(), barcode.symbology()));
 				printOptional("Add-On:     ", GTIN::EanAddOn(barcode));
 				printOptional("Price:      ", GTIN::Price(GTIN::EanAddOn(barcode)));
 				printOptional("Issue #:    ", GTIN::IssueNr(GTIN::EanAddOn(barcode)));
-			} else if (barcode.format() == BarcodeFormat::ITF && barcode.bytes().size() == 14) {
-				printOptional("Country:    ", GTIN::LookupCountryIdentifier(barcode.text(), barcode.format()));
+			} else if (barcode.symbology() == Symbology::ITF && barcode.bytes().size() == 14) {
+				printOptional("Country:    ", GTIN::LookupCountryIdentifier(barcode.text(), barcode.symbology()));
 			}
 
 			if (barcode.isPartOfSequence())

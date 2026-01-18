@@ -42,9 +42,9 @@ const Error& Barcode::error() const
 	return d->error;
 }
 
-BarcodeFormat Barcode::format() const
+Symbology Barcode::symbology() const
 {
-	return d->format;
+	return d->symbology;
 }
 
 const Position& Barcode::position() const
@@ -146,15 +146,15 @@ zint_symbol* Barcode::zint() const
 std::string Barcode::extra(std::string_view key) const
 {
 	if (key == "ALL") {
-		if (format() == BarcodeFormat::None)
+		if (symbology() == Symbology::None)
 			return {};
 		auto res =
 			StrCat("{", JsonProp("Text", text(TextMode::Plain)), JsonProp("HRI", text(TextMode::HRI)),
 				   JsonProp("TextECI", text(TextMode::ECI)), JsonProp("Bytes", text(TextMode::Hex)),
-				   JsonProp("Identifier", symbologyIdentifier()), JsonProp("Format", ToString(format())),
-				   JsonProp("ContentType", isValid() ? ToString(contentType()) : ""), JsonProp("Position", ToString(position())),
-				   JsonProp("HasECI", hasECI()), JsonProp("IsMirrored", isMirrored()), JsonProp("IsInverted", isInverted()), d->extra,
-				   JsonProp("Error", ToString(error())));
+				   JsonProp("Identifier", symbologyIdentifier()), JsonProp("Symbology", symbology().name()),
+				   JsonProp("Variant", symbology().variant()), JsonProp("ContentType", isValid() ? ToString(contentType()) : ""),
+				   JsonProp("Position", ToString(position())), JsonProp("HasECI", hasECI()), JsonProp("IsMirrored", isMirrored()),
+				   JsonProp("IsInverted", isInverted()), d->extra, JsonProp("Error", ToString(error())));
 		res.back() = '}';
 		return res;
 	}
@@ -170,11 +170,11 @@ bool Barcode::operator==(const Barcode& o) const
 
 bool BarcodeData::operator==(const BarcodeData& o) const
 {
-	if (format != o.format)
+	if (symbology != o.symbology)
 		return false;
 
 	// handle MatrixCodes first
-	if (!IsLinearBarcode(format)) {
+	if (!symbology.is(Symbology::Linear)) {
 		if (isValid() && o.isValid() && content.bytes != o.content.bytes)
 			return false;
 

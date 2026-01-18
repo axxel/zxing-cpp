@@ -241,7 +241,7 @@ BarcodeData Code128Reader::decodePattern(int rowNumber, PatternView& next, std::
 		error = ChecksumError();
 
 	int xStop = next.pixelsTillEnd();
-	return LinearBarcode(BarcodeFormat::Code128, raw2txt.text(), rowNumber, xStart, xStop, raw2txt.symbologyIdentifier(), error,
+	return LinearBarcode(Symbology::Code128, raw2txt.text(), rowNumber, xStart, xStop, raw2txt.symbologyIdentifier(), error,
 				   JsonProp(BarcodeExtra::ReaderInit, raw2txt.readerInit()));
 }
 

@@ -139,7 +139,7 @@ BarcodeData Code39Reader::decodePattern(int rowNumber, PatternView& next, std::u
 	SymbologyIdentifier symbologyIdentifier = {'A', symbologyModifiers[(int)hasValidCheckSum + 2 * (int)hasFullASCII]};
 
 	int xStop = next.pixelsTillEnd();
-	return LinearBarcode(BarcodeFormat::Code39, std::move(txt), rowNumber, xStart, xStop, symbologyIdentifier, error);
+	return LinearBarcode(Symbology::Code39, std::move(txt), rowNumber, xStart, xStop, symbologyIdentifier, error);
 }
 
 } // namespace ZXing::OneD

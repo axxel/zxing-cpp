@@ -108,7 +108,7 @@ static BarcodesData DoDecode(const BinaryBitmap& image, bool multiple, bool tryR
 					.addExtra("Checksum", customData->checksum, -1)
 				;
 			res.emplace_back(MatrixBarcode(std::move(decoderResult), DetectorResult{{}, {point(0), point(2), point(3), point(1)}},
-										   BarcodeFormat::PDF417));
+										   Symbology::PDF417));
 			if (!multiple)
 				return res;
 		}
@@ -312,7 +312,7 @@ static BarcodeData DecodePure(const BinaryBitmap& image_)
 
 	auto res = DecodeCodewords(codeWords, NumECCodeWords(info.ecLevel));
 
-	return MatrixBarcode(std::move(res), {{}, Rectangle<PointI>(left, top, width, height)}, BarcodeFormat::PDF417);
+	return MatrixBarcode(std::move(res), {{}, Rectangle<PointI>(left, top, width, height)}, Symbology::PDF417);
 }
 
 BarcodesData Reader::read(const BinaryBitmap& image, [[maybe_unused]] int maxSymbols) const

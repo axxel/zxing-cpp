@@ -130,10 +130,10 @@ static bool compareResult(const Barcode& barcode, const std::string& expected, s
 	return ret;
 }
 
-static std::string checkResult(const fs::path& imgPath, std::string_view expectedFormat, const Barcode& barcode)
+static std::string checkResult(const fs::path& imgPath, std::string_view expectedSymbology, const Barcode& barcode)
 {
-	if (auto format = ToString(barcode.format()); expectedFormat != format)
-		return std::format("Format mismatch: expected '{}' but got '{}'", expectedFormat, format);
+	if (auto symbology = barcode.symbology(); !IsEqualIgnoreCaseAnd(expectedSymbology, symbology.variant(), " /-"))
+		return std::format("Symbology mismatch: expected '{}' but got '{}'", expectedSymbology, symbology.variant());
 
 	auto readFile = [imgPath](const char* ending) {
 		std::ifstream ifs(fs::path(imgPath).replace_extension(ending), std::ios::binary);
@@ -290,12 +290,12 @@ static void doRunTests(const fs::path& directory, std::string_view format, int t
 	}
 }
 
-static Barcode readMultiple(const std::vector<fs::path>& imgPaths, std::string_view format)
+static Barcode readMultiple(const std::vector<fs::path>& imgPaths, std::string_view sym)
 {
 	Barcodes allBarcodes;
 	for (const auto& imgPath : imgPaths) {
 		auto barcodes = ReadBarcodes(ImageLoader::load(imgPath),
-									 ReaderOptions().formats(BarcodeFormatFromString(format)).tryDownscale(false));
+									 ReaderOptions().symbologies(Symbology(sym)).tryDownscale(false));
 		allBarcodes.insert(allBarcodes.end(), barcodes.begin(), barcodes.end());
 	}
 
@@ -367,7 +367,7 @@ int runBlackBoxTests(const fs::path& testPathPrefix, const std::set<std::string>
 		auto startTime = std::chrono::steady_clock::now();
 
 		// clang-format off
-#ifdef ZXING_ENABLE_AZTEC
+#if ZXING_ENABLE_AZTEC
 		// Expected failures:
 		// abc-inverted.png (fast) - fast does not try inverted
 		// az-thick.png (pure)
@@ -386,7 +386,7 @@ int runBlackBoxTests(const fs::path& testPathPrefix, const std::set<std::string>
 			{ 21, 21, 270 },
 		});
 #endif
-#ifdef ZXING_ENABLE_DATAMATRIX
+#if ZXING_ENABLE_DATAMATRIX
 		runTests("datamatrix-1", "DataMatrix", 29, {
 			{ 29, 29, 0   },
 			{  0, 27, 90  },
@@ -417,7 +417,7 @@ int runBlackBoxTests(const fs::path& testPathPrefix, const std::set<std::string>
 			{ 19, 0, pure },
 		});
 #endif
-#ifdef ZXING_ENABLE_1D
+#if ZXING_ENABLE_1D
 		runTests("dxfilmedge-1", "DXFilmEdge", 3, {
 			{ 1, 3, 0 },
 			{ 0, 3, 180 },
@@ -512,32 +512,32 @@ int runBlackBoxTests(const fs::path& testPathPrefix, const std::set<std::string>
 		runTests("upca-1", "UPC-A", 12, {
 			{ 10, 12, 0   },
 			{ 11, 12, 180 },
-		}, ReaderOptions().formats(BarcodeFormat::UPCA));
+		}, ReaderOptions().symbologies(Symbology::UPCA));
 
 		runTests("upca-2", "UPC-A", 36, {
 			{ 17, 22, 0   },
 			{ 17, 22, 180 },
-		}, ReaderOptions().formats(BarcodeFormat::UPCA));
+		}, ReaderOptions().symbologies(Symbology::UPCA));
 
 		runTests("upca-3", "UPC-A", 21, {
 			{ 7, 11, 0   },
 			{ 8, 11, 180 },
-		}, ReaderOptions().formats(BarcodeFormat::UPCA));
+		}, ReaderOptions().symbologies(Symbology::UPCA));
 
 		runTests("upca-4", "UPC-A", 19, {
 			{ 8, 12, 0, 1, 0 },
 			{ 9, 12, 0, 1, 180 },
-		}, ReaderOptions().formats(BarcodeFormat::UPCA));
+		}, ReaderOptions().symbologies(Symbology::UPCA));
 
 		runTests("upca-5", "UPC-A", 32, {
 			{ 18, 20, 0   },
 			{ 18, 20, 180 },
-		}, ReaderOptions().formats(BarcodeFormat::UPCA));
+		}, ReaderOptions().symbologies(Symbology::UPCA));
 
 		runTests("upca-extension-1", "UPC-A", 6, {
 			{ 4, 4, 0 },
 			{ 3, 4, 180 },
-		}, ReaderOptions().eanAddOnSymbol(EanAddOnSymbol::Require).formats(BarcodeFormat::UPCA));
+		}, ReaderOptions().eanAddOnSymbol(EanAddOnSymbol::Require).symbologies(Symbology::UPCA));
 
 		runTests("upce-1", "UPC-E", 3, {
 			{ 3, 3, 0   },
@@ -599,7 +599,7 @@ int runBlackBoxTests(const fs::path& testPathPrefix, const std::set<std::string>
 			{ 2, 0, pure },
 		});
 #endif
-#ifdef ZXING_ENABLE_MAXICODE
+#if ZXING_ENABLE_MAXICODE
 		runTests("maxicode-1", "MaxiCode", 9, {
 			{ 9, 9, 0 },
 		});
@@ -608,7 +608,7 @@ int runBlackBoxTests(const fs::path& testPathPrefix, const std::set<std::string>
 			{ 0, 0, 0 },
 		});
 #endif
-#ifdef ZXING_ENABLE_QRCODE
+#if ZXING_ENABLE_QRCODE
 		runTests("qrcode-1", "QRCode", 16, {
 			{ 16, 16, 0   },
 			{ 16, 16, 90  },
@@ -673,7 +673,7 @@ int runBlackBoxTests(const fs::path& testPathPrefix, const std::set<std::string>
 			{  2,  2, pure },
 		});
 #endif
-#ifdef ZXING_ENABLE_PDF417
+#if ZXING_ENABLE_PDF417
 		runTests("pdf417-1", "PDF417", 17, {
 			{ 16, 17, 0   },
 			{  1, 17, 90  },

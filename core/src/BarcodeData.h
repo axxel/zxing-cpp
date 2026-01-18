@@ -38,7 +38,7 @@ struct BarcodeData
 	Content content;
 	Error error = {};
 	Position position = {};
-	BarcodeFormat format = BarcodeFormat::None;
+	Symbology symbology = Symbology::None;
 	std::string extra = {};
 	StructuredAppendInfo sai = {};
 	ReaderOptions readerOpts = {};
@@ -52,24 +52,24 @@ struct BarcodeData
 
 	bool operator==(const BarcodeData& other) const;
 
-	inline bool isValid() const { return format != BarcodeFormat::None && !content.bytes.empty() && !error; }
+	inline bool isValid() const { return symbology != Symbology::None && !content.bytes.empty() && !error; }
 
 	inline int orientation() const { return narrow_cast<int>(std::lround(position.orientation() * 180 / std::numbers::pi)); }
 };
 
 using BarcodesData = std::vector<BarcodeData>;
 
-inline BarcodeData LinearBarcode(BarcodeFormat format, const std::string& text, int y, int xStart, int xStop, SymbologyIdentifier si,
+inline BarcodeData LinearBarcode(Symbology symbology, const std::string& text, int y, int xStart, int xStop, SymbologyIdentifier si,
                                  Error error = {}, std::string extra = {})
 {
 	return {.content = Content(ByteArray(text), si, CharacterSet::ISO8859_1),
 			.error = std::move(error),
 			.position = Line(y, xStart, xStop),
-			.format = format,
+			.symbology = symbology,
 			.extra = std::move(extra)};
 }
 
-inline BarcodeData MatrixBarcode(DecoderResult&& decodeResult, DetectorResult&& detectorResult, BarcodeFormat format)
+inline BarcodeData MatrixBarcode(DecoderResult&& decodeResult, DetectorResult&& detectorResult, Symbology symbology)
 {
 	auto extra = std::move(decodeResult).json();
 	if (JsonFind(extra, BarcodeExtra::Version).empty() && decodeResult.versionNumber())
@@ -86,7 +86,7 @@ inline BarcodeData MatrixBarcode(DecoderResult&& decodeResult, DetectorResult&& 
 	return {.content = std::move(decodeResult).content(),
 			.error = std::move(decodeResult).error(),
 			.position = std::move(detectorResult).position(),
-			.format = format,
+			.symbology = symbology,
 			.extra = std::move(extra),
 			.sai = std::move(decodeResult).structuredAppend(),
 			.symbol = std::move(detectorResult).bits(),

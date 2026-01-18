@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Barcode.h"
-#include "BarcodeFormat.h"
+#include "Symbology.h"
 
 #ifdef ZXING_INTERNAL
 #include "ZXAlgorithms.h"
@@ -48,7 +48,7 @@ bool IsCheckDigitValid(const std::basic_string<T>& s)
  *
  * `format` required for EAN-8 (UPC-E assumed if not given)
  */
-std::string LookupCountryIdentifier(std::string_view GTIN, const BarcodeFormat format = BarcodeFormat::None);
+std::string LookupCountryIdentifier(std::string_view GTIN, const Symbology format = Symbology::None);
 
 std::string EanAddOn(const Barcode& barcode);
 

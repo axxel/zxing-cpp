@@ -196,7 +196,7 @@ BarcodesData DoDecode(const std::vector<std::unique_ptr<RowReader>>& readers, co
 							}
 						}
 
-						if (result.format != BarcodeFormat::None) {
+						if (result.symbology != Symbology::None) {
 							res.push_back(std::move(result));
 
 							// if we found a valid code we have not seen before but a minLineCount > 1,
@@ -232,7 +232,7 @@ out:
 			if (HaveIntersectingBoundingBoxes(a->position, b->position))
 				*(a->lineCount < b->lineCount ? a : b) = BarcodeData();
 
-	std::erase_if(res, [](auto&& r) { return r.format == BarcodeFormat::None; });
+	std::erase_if(res, [](auto&& r) { return r.symbology == Symbology::None; });
 
 #ifdef PRINT_DEBUG
 	SaveAsPBM(dbg, rotate ? "od-log-r.pnm" : "od-log.pnm");

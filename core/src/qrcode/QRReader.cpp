@@ -24,22 +24,22 @@ namespace ZXing::QRCode {
 static BarcodeData readPure(const BitMatrix* binImg, const ReaderOptions& _opts)
 {
 	DetectorResult detectorResult;
-	if (_opts.hasFormat(BarcodeFormat::QRCode))
+	if (_opts.hasSymbology(Symbology::QRCode))
 		detectorResult = DetectPureQR(*binImg);
-	if (_opts.hasFormat(BarcodeFormat::MicroQRCode) && !detectorResult.isValid())
+	if (_opts.hasSymbology(Symbology::MicroQRCode) && !detectorResult.isValid())
 		detectorResult = DetectPureMQR(*binImg);
-	if (_opts.hasFormat(BarcodeFormat::RMQRCode) && !detectorResult.isValid())
+	if (_opts.hasSymbology(Symbology::RMQRCode) && !detectorResult.isValid())
 		detectorResult = DetectPureRMQR(*binImg);
 
 	if (!detectorResult.isValid())
 		return {};
 
 	auto decoderResult = Decode(detectorResult.bits());
-	auto format = detectorResult.bits().width() != detectorResult.bits().height() ? BarcodeFormat::RMQRCode
-				  : detectorResult.bits().width() < 21                            ? BarcodeFormat::MicroQRCode
-																				  : BarcodeFormat::QRCode;
+	auto symbology = detectorResult.bits().width() != detectorResult.bits().height() ? Symbology::RMQRCode
+					 : detectorResult.bits().width() < 21                            ? Symbology::MicroQRCode
+																					 : Symbology::QRCode;
 
-	return MatrixBarcode(std::move(decoderResult), std::move(detectorResult), format);
+	return MatrixBarcode(std::move(decoderResult), std::move(detectorResult), symbology);
 }
 
 void logFPSet(const FinderPatternSet& fps [[maybe_unused]])
@@ -80,7 +80,7 @@ BarcodesData Reader::read(const BinaryBitmap& image, int maxSymbols) const
 	std::vector<ConcentricPattern> usedFPs;
 	BarcodesData res;
 	
-	if (_opts.hasFormat(BarcodeFormat::QRCode)) {
+	if (_opts.hasSymbology(Symbology::QRCode)) {
 		auto allFPSets = GenerateFinderPatternSets(allFPs);
 		for (const auto& fpSet : allFPSets) {
 			if (Contains(usedFPs, fpSet.bl) || Contains(usedFPs, fpSet.tl) || Contains(usedFPs, fpSet.tr))
@@ -97,7 +97,7 @@ BarcodesData Reader::read(const BinaryBitmap& image, int maxSymbols) const
 					usedFPs.push_back(fpSet.tr);
 				}
 				if (decoderResult.isValid(_opts.returnErrors())) {
-					res.emplace_back(MatrixBarcode(std::move(decoderResult), std::move(detectorResult), BarcodeFormat::QRCode));
+					res.emplace_back(MatrixBarcode(std::move(decoderResult), std::move(detectorResult), Symbology::QRCode));
 					if (maxSymbols && Size(res) == maxSymbols)
 						break;
 				}
@@ -105,7 +105,7 @@ BarcodesData Reader::read(const BinaryBitmap& image, int maxSymbols) const
 		}
 	}
 	
-	if (_opts.hasFormat(BarcodeFormat::MicroQRCode) && !(maxSymbols && Size(res) == maxSymbols)) {
+	if (_opts.hasSymbology(Symbology::MicroQRCode) && !(maxSymbols && Size(res) == maxSymbols)) {
 		for (const auto& fp : allFPs) {
 			if (Contains(usedFPs, fp))
 				continue;
@@ -114,7 +114,7 @@ BarcodesData Reader::read(const BinaryBitmap& image, int maxSymbols) const
 			if (detectorResult.isValid()) {
 				auto decoderResult = Decode(detectorResult.bits());
 				if (decoderResult.isValid(_opts.returnErrors())) {
-					res.emplace_back(MatrixBarcode(std::move(decoderResult), std::move(detectorResult), BarcodeFormat::MicroQRCode));
+					res.emplace_back(MatrixBarcode(std::move(decoderResult), std::move(detectorResult), Symbology::MicroQRCode));
 					if (maxSymbols && Size(res) == maxSymbols)
 						break;
 				}
@@ -123,7 +123,7 @@ BarcodesData Reader::read(const BinaryBitmap& image, int maxSymbols) const
 		}
 	}
 	
-	if (_opts.hasFormat(BarcodeFormat::RMQRCode) && !(maxSymbols && Size(res) == maxSymbols)) {
+	if (_opts.hasSymbology(Symbology::RMQRCode) && !(maxSymbols && Size(res) == maxSymbols)) {
 		// TODO proper
 		for (const auto& fp : allFPs) {
 			if (Contains(usedFPs, fp))
@@ -133,7 +133,7 @@ BarcodesData Reader::read(const BinaryBitmap& image, int maxSymbols) const
 			if (detectorResult.isValid()) {
 				auto decoderResult = Decode(detectorResult.bits());
 				if (decoderResult.isValid(_opts.returnErrors())) {
-					res.emplace_back(MatrixBarcode(std::move(decoderResult), std::move(detectorResult), BarcodeFormat::RMQRCode));
+					res.emplace_back(MatrixBarcode(std::move(decoderResult), std::move(detectorResult), Symbology::RMQRCode));
 					if (maxSymbols && Size(res) == maxSymbols)
 						break;
 				}

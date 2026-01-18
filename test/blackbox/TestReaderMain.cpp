@@ -36,14 +36,14 @@ int main(int argc, char** argv)
 	if (Contains({".png", ".jpg", ".pgm", ".gif"}, pathPrefix.extension())) {
 		auto opts = ReaderOptions().tryHarder(!getEnv("FAST", false)).tryRotate(true).isPure(getEnv("IS_PURE"));
 		if (getenv("FORMATS"))
-			opts.formats(BarcodeFormatsFromString(getenv("FORMATS")));
+			opts.symbologies(Symbologies(getenv("FORMATS")));
 		int rotation = getEnv("ROTATION");
 
 		for (int i = 1; i < argc; ++i) {
 			Barcode barcode = ReadBarcode(ImageLoader::load(argv[i]).rotated(rotation), opts);
 			std::print("{}: ", argv[i]);
 			if (barcode.isValid())
-				std::println("{}: {}", ToString(barcode.format()), barcode.text());
+				std::println("{}: {}", barcode.symbology().variant(), barcode.text());
 			else
 				std::println("FAILED");
 			if (barcode.isValid() && getenv("WRITE_TEXT")) {

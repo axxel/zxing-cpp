@@ -125,6 +125,8 @@ set (COMMON_FILES
     src/ReaderOptions.h
     src/ReadBarcode.h
     src/ReadBarcode.cpp
+    src/Symbology.h
+    src/Symbology.cpp
     src/SymbologyIdentifier.h
     src/Utf.h
     src/Utf.cpp
@@ -225,6 +227,7 @@ set (PUBLIC_HEADERS
     src/Quadrilateral.h
     src/ReadBarcode.h
     src/ReaderOptions.h
+    src/Symbology.h
     src/WriteBarcode.h
     src/ZXingCpp.h
     $<$<BOOL:${ZXING_C_API}>:${CMAKE_CURRENT_SOURCE_DIR}/src/ZXingC.h>

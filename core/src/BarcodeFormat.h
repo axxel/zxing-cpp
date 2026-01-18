@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Flags.h"
+#include "Symbology.h"
 
 #include <string>
 #include <string_view>
@@ -53,11 +54,6 @@ enum class BarcodeFormat
 
 ZX_DECLARE_FLAGS(BarcodeFormats, BarcodeFormat)
 
-inline constexpr bool IsLinearBarcode(BarcodeFormat format)
-{
-	return BarcodeFormats(BarcodeFormat::LinearCodes).testFlag(format);
-}
-
 std::string ToString(BarcodeFormat format);
 std::string ToString(BarcodeFormats formats);
 
@@ -75,5 +71,59 @@ BarcodeFormat BarcodeFormatFromString(std::string_view str);
  * @throws std::invalid_parameter if the string can not be fully parsed.
  */
 BarcodeFormats BarcodeFormatsFromString(std::string_view str);
+
+inline Symbology BarcodeFormatToSymbology(BarcodeFormat format)
+{
+	switch (format) {
+	case BarcodeFormat::Aztec: return Symbology::Aztec;
+	case BarcodeFormat::Codabar: return Symbology::Codabar;
+	case BarcodeFormat::Code128 : return Symbology::Code128;
+	case BarcodeFormat::Code39 : return Symbology::Code39;
+	case BarcodeFormat::Code93 : return Symbology::Code93;
+	case BarcodeFormat::DataBar : return Symbology::DataBar;
+	case BarcodeFormat::DataBarExpanded : return Symbology::DataBarExp;
+	case BarcodeFormat::DataBarLimited : return Symbology::DataBarLtd;
+	case BarcodeFormat::DataMatrix: return Symbology::DataMatrix;
+	case BarcodeFormat::DXFilmEdge: return Symbology::DXFilmEdge;
+	case BarcodeFormat::EAN13: return Symbology::EAN13;
+	case BarcodeFormat::EAN8: return Symbology::EAN8;
+	case BarcodeFormat::ITF: return Symbology::ITF;
+	case BarcodeFormat::MaxiCode: return Symbology::MaxiCode;
+	case BarcodeFormat::MicroQRCode: return Symbology::MicroQRCode;
+	case BarcodeFormat::PDF417: return Symbology::PDF417;
+	case BarcodeFormat::QRCode: return Symbology::QRCode;
+	case BarcodeFormat::RMQRCode: return Symbology::RMQRCode;
+	case BarcodeFormat::UPCA: return Symbology::UPCA;
+	case BarcodeFormat::UPCE: return Symbology::UPCE;
+	default: return Symbology::None;
+	}
+}
+
+inline BarcodeFormat BarcodeFormatFromSymbology(Symbology symbology)
+{
+	switch (symbology) {
+	case SymbologyID::Aztec: return BarcodeFormat::Aztec;
+	case SymbologyID::Codabar: return BarcodeFormat::Codabar;
+	case SymbologyID::Code128: return BarcodeFormat::Code128;
+	case SymbologyID::Code39: return BarcodeFormat::Code39;
+	case SymbologyID::Code93: return BarcodeFormat::Code93;
+	case SymbologyID::DataBar: return BarcodeFormat::DataBar;
+	case SymbologyID::DataBarExp: return BarcodeFormat::DataBarExpanded;
+	case SymbologyID::DataBarLtd: return BarcodeFormat::DataBarLimited;
+	case SymbologyID::DataMatrix: return BarcodeFormat::DataMatrix;
+	case SymbologyID::DXFilmEdge: return BarcodeFormat::DXFilmEdge;
+	case SymbologyID::EAN13: return BarcodeFormat::EAN13;
+	case SymbologyID::EAN8: return BarcodeFormat::EAN8;
+	case SymbologyID::ITF: return BarcodeFormat::ITF;
+	case SymbologyID::MaxiCode: return BarcodeFormat::MaxiCode;
+	case SymbologyID::MicroQRCode: return BarcodeFormat::MicroQRCode;
+	case SymbologyID::PDF417: return BarcodeFormat::PDF417;
+	case SymbologyID::QRCode: return BarcodeFormat::QRCode;
+	case SymbologyID::RMQRCode: return BarcodeFormat::RMQRCode;
+	case SymbologyID::UPCA: return BarcodeFormat::UPCA;
+	case SymbologyID::UPCE: return BarcodeFormat::UPCE;
+	default: return BarcodeFormat::None;
+	}
+}
 
 } // ZXing
