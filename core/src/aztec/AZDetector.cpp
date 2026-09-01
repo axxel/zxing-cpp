@@ -186,7 +186,7 @@ static std::vector<ConcentricPattern> FindFinderPatterns(const BitMatrix& image,
 					++N;
 					auto pattern = LocateConcentricPattern(image, PATTERN, p, image.width() / 3);
 					if (pattern){
-						log(*pattern, 2);
+						log(*pattern, LOG_G);
 						res.push_back(*pattern);
 					}
 				}
@@ -227,11 +227,11 @@ static std::vector<ConcentricPattern> FindFinderPatterns(const BitMatrix& image,
 
 			if (!found) {
 				++N;
-				log(p, 1);
+				log(p, LOG_GR);
 
 				auto pattern = LocateAztecCenter(image, p, next.sum());
 				if (pattern) {
-					log(*pattern, 3);
+					log(*pattern, LOG_B);
 					assert(image.get(*pattern));
 					res.push_back(*pattern);
 				}
@@ -469,7 +469,7 @@ DetectorResults Detect(const BitMatrix& image, bool isPure, bool tryHarder, int 
 					log_l("\nlocate %dx%d", pi.x, pi.y);
 					apP.set(pi.x, pi.y, LocalGrid(image, mod2Pix, PointI(srcQuad[i]), {dim, dim}).findTimingPatternCross(true, 4));
 					dstQuad[i] = apP(pi.x, pi.y).value_or(mod2Pix(srcQuad[i]));
-					log(dstQuad[i], 2);
+					log(dstQuad[i], LOG_G);
 				}
 				mod2Pix = PerspectiveTransform(srcQuad, dstQuad);
 			}

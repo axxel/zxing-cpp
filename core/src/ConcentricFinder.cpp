@@ -21,7 +21,7 @@ static std::optional<ConcentricPattern> AverageEdgePixels(BitMatrixCursorI cur, 
 			return {};
 		totalSteps += steps;
 		sum += centered(cur.p) + centered(cur.p + cur.back());
-		log(cur.p + cur.back(), 2);
+		log(cur.p + cur.back(), LOG_G);
 	}
 	return ConcentricPattern{sum / (2 * numOfEdges), totalSteps};
 }
@@ -75,7 +75,7 @@ std::optional<ConcentricPattern> CenterOfRing(const BitMatrix& image, PointI cen
 	const int maxR = requireCircle ? width + 1 : 2 * width;
 	bool inner = nth < 0;
 	nth = std::abs(nth);
-	log(center, 3);
+	log(center, LOG_B);
 	BitMatrixCursorI cur(image, center, {1, 0});
 	if (!cur.stepToEdge(nth, maxR, inner))
 		return {};
@@ -91,7 +91,7 @@ std::optional<ConcentricPattern> CenterOfRing(const BitMatrix& image, PointI cen
 	double sumR2 = 0, mR = maxR, MR = 0;
 #endif
 	do {
-		log(cur.p, 4);
+		log(cur.p, LOG_R);
 		sumP += centered(cur.p);
 		++nP;
 
@@ -173,7 +173,7 @@ static std::vector<PointF> CollectRingPoints(const BitMatrix& image, PointF cent
 	points.reserve(maxN / 2);
 
 	do {
-		log(cur.p, 4);
+		log(cur.p, LOG_R);
 		points.push_back(centered(cur.p));
 
 		// find out if we come full circle around the center. 8 bits have to be set in the end.
@@ -278,13 +278,13 @@ std::optional<QuadrilateralF> FindConcentricPatternCorners(const BitMatrix& imag
 	auto res = Blend(*innerCorners, *outerCorners);
 
 	for (auto p : *innerCorners)
-		log(p, 3);
+		log(p, LOG_B);
 
 	for (auto p : *outerCorners)
-		log(p, 3);
+		log(p, LOG_B);
 
 	for (auto p : res)
-		log(p, 3);
+		log(p, LOG_B);
 
 	return res;
 }

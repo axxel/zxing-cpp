@@ -81,11 +81,11 @@ std::vector<ConcentricPattern> FindFinderPatterns(const BitMatrix& image, bool t
 				auto width = 2 * next.sum(); // the factor 2 allows for a maximum aspect ratio of 4:1 due to perspective distortion
 				auto pattern = LocateConcentricPattern<E2E>(image, PATTERN, p, width);
 				if (pattern && !Contains(res, *pattern)) {
-					log(*pattern, 3);
-					log(*pattern + PointF(.2, 0), 3);
-					log(*pattern - PointF(.2, 0), 3);
-					log(*pattern + PointF(0, .2), 3);
-					log(*pattern - PointF(0, .2), 3);
+					log(*pattern, LOG_B);
+					log(*pattern + PointF(.2, 0), LOG_B);
+					log(*pattern - PointF(.2, 0), LOG_B);
+					log(*pattern + PointF(0, .2), LOG_B);
+					log(*pattern - PointF(0, .2), LOG_B);
 					assert(image.get(pattern->x, pattern->y));
 					res.push_back(*pattern);
 				}
@@ -382,7 +382,7 @@ static RegressionLine TraceLine(const BitMatrix& image, PointF p, PointF d, int 
 	line.evaluate(1.0, true);
 
 	for (auto p : line.points())
-		log(p, 2);
+		log(p, LOG_G);
 
 	return line;
 }
@@ -404,7 +404,7 @@ static PerspectiveTransform Mod2Pix(int dimension, PointF brOffset, Quadrilatera
 
 static std::optional<PointF> LocateAlignmentPattern(const BitMatrix& image, int moduleSize, PointF estimate)
 {
-	log(estimate, 4);
+	log(estimate, LOG_R);
 
 	for (auto d : {PointF{0, 0}, {0, -1}, {0, 1}, {-1, 0}, {1, 0}, {-1, -1}, {1, -1}, {1, 1}, {-1, 1},
 #if 1
@@ -426,7 +426,7 @@ static std::optional<PointF> LocateAlignmentPattern(const BitMatrix& image, int 
 			if (auto cor2 = CenterOfRing(image, PointI(*cor), moduleSize * 3, 2))
 				if (distance(*cor1, *cor2) < moduleSize / 2 && cor2->size > cor1->size) {
 					auto res = (*cor1 + *cor2) / 2;
-					log(res, 3);
+					log(res, LOG_I);
 					return res;
 				}
 	}
@@ -449,7 +449,7 @@ static const Version* ReadVersion(const BitMatrix& image, int dimension, const P
 					versionBits = -1;
 				else
 					AppendBit(versionBits, image.get(pix));
-				log(pix, 3);
+				log(pix, LOG_B);
 			}
 		bits[static_cast<int>(mirror)] = versionBits;
 	}
@@ -487,7 +487,7 @@ DetectorResults SampleQR(const BitMatrix& image, const FinderPatternSet& fp)
 	if (bl2.isValid() && tr2.isValid() && bl3.isValid() && tr3.isValid()) {
 		// intersect both outer and inner line pairs and take the center point between the two intersection points
 		auto brInter = (intersect(bl2, tr2) + intersect(bl3, tr3)) / 2;
-		log(brInter, 3);
+		log(brInter, LOG_B);
 
 		if (dimension > 21)
 			if (auto brCP = LocateAlignmentPattern(image, moduleSize, brInter))
@@ -504,7 +504,7 @@ DetectorResults SampleQR(const BitMatrix& image, const FinderPatternSet& fp)
 		brOffset = PointF(0, 0);
 	}
 
-	log(br, 3);
+	log(br, LOG_B);
 	auto mod2Pix = Mod2Pix(dimension, brOffset, {fp.tl, fp.tr, br, fp.bl});
 
 	if( dimension >= Version::SymbolSize(7, Type::Model2).x) {
@@ -891,14 +891,14 @@ DetectorResult SampleRMQR(const BitMatrix& image, const ConcentricPattern& fp)
 				   + intersect(RegressionLine(a[1], a[2]), RegressionLine(b[0], b[1])))
 				  / 2;
 
-		log(tr, 2);
-		log(bl, 2);
+		log(tr, LOG_G);
+		log(bl, LOG_G);
 
 		return QuadrilateralF{tl, tr, br, bl};
 	};
 
 	if (auto found = LocateAlignmentPattern(image, fp.size / 7, bestPT(dim - PointF(3, 3)))) {
-		log(*found, 2);
+		log(*found, LOG_G);
 		if (auto spQuad = FindConcentricPatternCorners(image, *found, fp.size / 2, 1)) {
 			auto dest = intersectQuads(*fpQuad, *spQuad);
 			if (dim.y <= 9) {
