@@ -123,7 +123,7 @@ std::optional<ConcentricPattern> CenterOfRing(const BitMatrix& image, PointI cen
 	log_l(
 		"CenterOfRing: center=(%4d,%4d), width=%3d, nth=%d, reqCircle=%d, n=%3d, meanR=%5.2f, var=%5.2f, C=%5.2f, mR=%4.1f, MR=%4.1f, "
 		"neighbourMask=%x -> res=(%5.1f,%5.1f), delta=%3.1f",
-		center.x * 5, center.y * 5, width, nth, requireCircle, nP, meanR, variation, C, mR, MR, neighbourMask, meanP.x * 5,
+		center.x * 5 + 2, center.y * 5 + 2, width, nth, requireCircle, nP, meanR, variation, C, mR, MR, neighbourMask, meanP.x * 5,
 		meanP.y * 5, centerMove);
 #endif
 	// C > 12 means that the edge is very irregular, centerMove > 0.5 means the center moved more than half the estimated width of the ring

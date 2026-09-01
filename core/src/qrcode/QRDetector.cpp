@@ -402,9 +402,10 @@ static PerspectiveTransform Mod2Pix(int dimension, PointF brOffset, Quadrilatera
 	return {quad, pix};
 }
 
-static std::optional<PointF> LocateAlignmentPattern(const BitMatrix& image, int moduleSize, PointF estimate)
+static std::optional<PointF> LocateAlignmentPattern(const BitMatrix& image, double moduleSize, PointF estimate)
 {
 	log(estimate, LOG_R);
+	log_l("LocateAlignmentPattern: local modSize = %.3f @ (%d, %d)", moduleSize, PointI(estimate).x * 5 + 2, PointI(estimate).y * 5 + 2);
 
 	for (auto d : {PointF{0, 0}, {0, -1}, {0, 1}, {-1, 0}, {1, 0}, {-1, -1}, {1, -1}, {1, 1}, {-1, 1},
 #if 1
@@ -412,7 +413,7 @@ static std::optional<PointF> LocateAlignmentPattern(const BitMatrix& image, int 
 #else
 				   {0, -2}, {0, 2}, {-2, 0}, {2, 0}, {-1, -2}, {1, -2}, {-1, 2}, {1, 2}, {-2, -1}, {-2, 1}, {2, -1}, {2, 1}}) {
 #endif
-		auto p = estimate + moduleSize * 2.25 * d;
+		auto p = estimate + moduleSize * 2.8 * d;
 		if (!image.isIn(p))
 			continue;
 
@@ -467,7 +468,7 @@ DetectorResults SampleQR(const BitMatrix& image, const FinderPatternSet& fp)
 
 	auto best = top.err == left.err ? (top.dim > left.dim ? top : left) : (top.err < left.err ? top : left);
 	int dimension = best.dim;
-	int moduleSize = static_cast<int>(top.dim == left.dim ? std::midpoint(top.ms, left.ms) : best.ms) + 1;
+	auto moduleSize = top.dim == left.dim ? std::midpoint(top.ms, left.ms) : best.ms;
 
 	auto br = PointF{-1, -1};
 	auto brOffset = PointF{3, 3};
@@ -527,6 +528,13 @@ DetectorResults SampleQR(const BitMatrix& image, const FinderPatternSet& fp)
 
 		// project the alignment pattern at module coordinates x/y to pixel coordinate based on current mod2Pix
 		auto projectM2P = [&mod2Pix, &apM](int x, int y) { return mod2Pix(centered(PointI(apM[x], apM[y]))); };
+		// estimate module size at module coordinates x/y based on current mod2Pix
+		auto estimateModuleSize = [&mod2Pix, &apM](int x, int y) {
+			auto p0 = mod2Pix(PointF(apM[x], apM[y]));
+			auto p1 = mod2Pix(PointF(apM[x] + 1, apM[y]));
+			auto p2 = mod2Pix(PointF(apM[x], apM[y] + 1));
+			return (distance(p0, p1) + distance(p0, p2)) / 2;
+		};
 
 		auto findInnerCornerOfConcentricPattern = [&image, &apP, &projectM2P](int x, int y, const ConcentricPattern& fp) {
 			auto pc = *apP.set(x, y, projectM2P(x, y));
@@ -553,7 +561,7 @@ DetectorResults SampleQR(const BitMatrix& image, const FinderPatternSet& fp)
 
 				PointF guessed =
 					x * y == 0 ? bestGuessAPP(x, y) : bestGuessAPP(x - 1, y) + bestGuessAPP(x, y - 1) - bestGuessAPP(x - 1, y - 1);
-				if (auto found = LocateAlignmentPattern(image, moduleSize, guessed))
+				if (auto found = LocateAlignmentPattern(image, estimateModuleSize(x, y), guessed))
 					apP.set(x, y, found);
 			}
 
@@ -579,7 +587,7 @@ DetectorResults SampleQR(const BitMatrix& image, const FinderPatternSet& fp)
 				// if we found 2 each, intersect the two lines that are formed by connecting the point pairs
 				if (Size(hori) == 2 && Size(verti) == 2) {
 					auto guessed = intersect(RegressionLine(hori[0], hori[1]), RegressionLine(verti[0], verti[1]));
-					auto found = LocateAlignmentPattern(image, moduleSize, guessed);
+					auto found = LocateAlignmentPattern(image, estimateModuleSize(x, y), guessed);
 					// search again near that intersection and if the search fails, use the intersection
 					if (!found) log_l("location guessed at %dx%d", x, y);
 					apP.set(x, y, found ? *found : guessed);
