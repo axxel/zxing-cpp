@@ -30,6 +30,8 @@ internal class Dll
 	[DllImport(DllName)] [return:MarshalAs(UnmanagedType.I1)] public static extern bool ZXing_ReaderOptions_getTryInvert(IntPtr opts);
 	[DllImport(DllName)] public static extern void ZXing_ReaderOptions_setTryDownscale(IntPtr opts, bool tryDownscale);
 	[DllImport(DllName)] [return:MarshalAs(UnmanagedType.I1)] public static extern bool ZXing_ReaderOptions_getTryDownscale(IntPtr opts);
+	[DllImport(DllName)] public static extern void ZXing_ReaderOptions_setTryDenoise(IntPtr opts, bool tryDenoise);
+	[DllImport(DllName)] [return:MarshalAs(UnmanagedType.I1)] public static extern bool ZXing_ReaderOptions_getTryDenoise(IntPtr opts);
 	[DllImport(DllName)] [return:MarshalAs(UnmanagedType.I1)] public static extern bool ZXing_ReaderOptions_getIsPure(IntPtr opts);
 	[DllImport(DllName)] public static extern void ZXing_ReaderOptions_setIsPure(IntPtr opts, bool isPure);
 	[DllImport(DllName)] public static extern void ZXing_ReaderOptions_setValidateOptionalChecksum(IntPtr opts, bool validateOptionalChecksum);
@@ -487,6 +489,13 @@ public class ReaderOptions : IDisposable
 	{
 		get => ZXing_ReaderOptions_getTryDownscale(_d);
 		set => ZXing_ReaderOptions_setTryDownscale(_d, value);
+	}
+
+	/// <summary>Also try detection after denoising.</summary>
+	public bool TryDenoise
+	{
+		get => ZXing_ReaderOptions_getTryDenoise(_d);
+		set => ZXing_ReaderOptions_setTryDenoise(_d, value);
 	}
 
 	/// <summary>Assume the image contains only a single, perfectly aligned barcode, nothing else.</summary>
